@@ -20,7 +20,7 @@
 # from turtle import position
 # import matplotlib.pyplot as plt
 # from scipy import interpolate
-# import numpy as np
+import numpy as np
 import math as m
 # import sys
 # import os
@@ -44,7 +44,7 @@ verbose = True  # Shows more debugging information
 class Trajectory():
     def __init__(self):
         self.__position_init = {"x": 0.0, "y": 0.0}
-        # This is the initial position, where the trajectories are generated
+        # This is the initial position, where the trajectories are generated 
         # from
 
         self.__direction_init = 0
@@ -83,6 +83,16 @@ class Trajectory():
     def set_step_size_noise(self, mdev):
         self.__length_step_noise = float(mdev)
 
+    def generate(self):
+        direction = self.__direction_init
+        path = []
+        path.append(self.__position_init)
+        for i in range(self.__length_total):
+            while(True):
+                direction_try = direction + np.random.normal(0, self.__direction_step_noise)
+                length_try = 
+
+
 
 class Line():
     def __init__(self, x1, y1, x2, y2):
@@ -96,4 +106,4 @@ class Line():
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    pass
+    line1 = Line()
