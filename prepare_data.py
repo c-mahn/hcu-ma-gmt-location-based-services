@@ -74,11 +74,12 @@ if __name__ == '__main__':
         geometry = []
         data = json.loads(import_data(f'{filename}.geojson'))
         for feature in data["features"]:
-            if(feature["properties"]["Type"] == "Wall" or feature["properties"]["Type"] == "Fassade"):
+            if(feature["properties"]["Type"] == "Wall" or feature["properties"]["Type"] == "Fassade" or feature["properties"]["Type"] == "B_Door" or feature["properties"]["Type"] == "Door"):
                 if(feature["geometry"] is not None):
                     walls = convert_walls(feature["geometry"])
                     for wall in walls:
                         geometry.append(wall)
+        print(len(geometry))
         with open(os.path.join("data", f'{filename}_converted.csv'), "w") as file:
             for j in geometry:
                 file.write(f'{j[0]}; {j[1]}; {j[2]}; {j[3]}\n')

@@ -127,10 +127,6 @@ class Trajectory():
         self.__position_init = {"x": 0.0, "y": 0.0}
         # This is the initial position, where the trajectories are generated 
         # from
-        
-        self.__position = self.__position_init
-        # This position changes during generation of the trajectory and is used
-        # for line-generation. You may not change it manually.
 
         self.__direction_init = 0
         # This is the initial direction the trajectory starts from
@@ -139,7 +135,7 @@ class Trajectory():
         # This is the amount of bending, that can occur for each point of the
         # trajectory. The measurement is given in radians.
 
-        self.__length_total = 2500
+        self.__length_total = 500
         # length of the trajectory in footsteps
 
         self.__length_step = 0.9
@@ -214,26 +210,24 @@ class Trajectory():
         This method generates the trajectory.
         """
         direction = self.__direction_init
-        self.__position = self.__position_init
-        path = []
-        path.append(self.__position_init)
+        position = self.__position_init
         for i in range(self.__length_total):
             tries = 0
-            direction_try = direction + np.random.normal(0, self.__direction_step_noise)
+            direction_try = direction
             while(tries < 100):
                 # print(f'{tries}    ', end="\r")
                 direction_try += np.random.normal(0, self.__direction_step_noise)
                 length_try = self.__length_step + np.random.normal(0, self.__length_step_noise)
                 position_try = {"x": None, "y": None}
-                position_try["x"] = self.__position["x"] + (m.cos(direction_try) * length_try)
-                position_try["y"] = self.__position["y"] + (m.sin(direction_try) * length_try)
-                line_try = Line(self.__position["x"], self.__position["y"], position_try["x"], position_try["y"])
+                position_try["x"] = position["x"] + (m.cos(direction_try) * length_try)
+                position_try["y"] = position["y"] + (m.sin(direction_try) * length_try)
+                line_try = Line(position["x"], position["y"], position_try["x"], position_try["y"])
                 if(self.__check_intersection(line_try)):
                     tries += 1
                 else:
                     self.__trajectory.append(line_try)
                     direction = direction_try
-                    self.__position = position_try
+                    position = position_try
                     break
             if(verbose):
                 print(f'[INFO][{i+1}/{self.__length_total}] Generating trajectory', end="\r")
@@ -267,9 +261,9 @@ class Line():
 
 if __name__ == '__main__':
     filenames = ["EG_polygon_semantic_converted.csv", "1OG_polygon_semantic_converted.csv", "4OG_polygon_semantic_converted.csv"]
-    start_positions = [{"x": 566522, "y": 5932816},
+    start_positions = [{"x": 566626, "y": 5932826},
                        {"x": 566560, "y": 5932819},
-                       {"x": 566508, "y": 5932802}]
+                       {"x": 566570, "y": 5932828}]
     for index, filename in enumerate(filenames):
         lines = import_lines(filename)
         trajectory = Trajectory()
