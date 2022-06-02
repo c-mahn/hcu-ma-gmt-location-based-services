@@ -69,7 +69,7 @@ def convert_walls(geometry):
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    filenames = ["EG_polygon_semantic", "1OG_polygon_semantic", "4OG_polygon_semantic"]
+    filenames = ["EG_polygon_semantic", "1OG_polygon_semantic", "4OG_polygon_semantic", "EG_polygon_semantic_edited", "1OG_polygon_semantic_edited", "4OG_polygon_semantic_edited"]
     for i, filename in enumerate(filenames):
         geometry = []
         data = json.loads(import_data(f'{filename}.geojson'))
@@ -82,4 +82,4 @@ if __name__ == '__main__':
         print(len(geometry))
         with open(os.path.join("data", f'{filename}_converted.csv'), "w") as file:
             for j in geometry:
-                file.write(f'{j[0]}; {j[1]}; {j[2]}; {j[3]}\n')
+                file.write(f'{j[1]}; {j[0]}; {j[3]}; {j[2]}\n')

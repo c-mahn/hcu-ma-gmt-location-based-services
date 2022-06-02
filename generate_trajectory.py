@@ -260,10 +260,10 @@ class Line():
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    filenames = ["EG_polygon_semantic_converted.csv", "1OG_polygon_semantic_converted.csv", "4OG_polygon_semantic_converted.csv"]
-    start_positions = [{"x": 566626, "y": 5932826},
-                       {"x": 566560, "y": 5932819},
-                       {"x": 566570, "y": 5932828}]
+    filenames = ["EG_polygon_semantic_edited_converted.csv", "1OG_polygon_semantic_edited_converted.csv", "4OG_polygon_semantic_edited_converted.csv"]
+    start_positions = [{"x": 5932826, "y": 566626},
+                       {"x": 5932819, "y": 566560},
+                       {"x": 5932828, "y": 566570}]
     for index, filename in enumerate(filenames):
         lines = import_lines(filename)
         trajectory = Trajectory()
