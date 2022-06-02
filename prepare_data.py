@@ -39,8 +39,7 @@ verbose = True  # Shows more debugging information
 # -----------------------------------------------------------------------------
 
 def import_data(input_filename):
-# Import of measurements
-
+    # Import of measurements
     if(verbose):
         print(f'[Info] Opening file "{input_filename}"', end="\r")
     with open(os.path.join("data", input_filename)) as file:
@@ -49,6 +48,17 @@ def import_data(input_filename):
         data = file.readlines()
     if(verbose):
         print(f'[Info] Read file "{input_filename}" successfully')
+    text = ""
+    for i in data:
+        text = f'{text}{i.strip()}'
+    return(text)
+
+def convert_walls(geometry):
+    coordinates = geometry["coordinates"][0]
+    lines = []
+    for i, e in enumerate(coordinates):
+        lines.append([coordinates[i-1][0], coordinates[i-1][1], e[0], e[1]])
+    return(lines)
 
 
 # Classes
@@ -59,4 +69,16 @@ def import_data(input_filename):
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    pass
+    filenames = ["EG_polygon_semantic", "1OG_polygon_semantic", "4OG_polygon_semantic"]
+    for i, filename in enumerate(filenames):
+        geometry = []
+        data = json.loads(import_data(f'{filename}.geojson'))
+        for feature in data["features"]:
+            if(feature["properties"]["Type"] == "Wall"):
+                if(feature["geometry"] is not None):
+                    walls = convert_walls(feature["geometry"])
+                    for wall in walls:
+                        geometry.append(wall)
+        with open(os.path.join("data", f'{filename}_converted.csv'), "w") as file:
+            for j in geometry:
+                file.write(f'{j[0]}; {j[1]}; {j[2]}; {j[3]}\n')

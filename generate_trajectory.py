@@ -18,12 +18,12 @@
 # import random as r
 # import re
 # from turtle import position
-# import matplotlib.pyplot as plt
 # from scipy import interpolate
 import numpy as np
 import math as m
 # import sys
-# import os
+import os
+import matplotlib.pyplot as plt
 # from scipy.fft import fft, fftfreq
 # from scipy import signal
 
@@ -54,6 +54,34 @@ def geradenschnitt(punkt1, punkt2, punkt3, punkt4):
     ys = punkt1["y"]+(xs-punkt1["x"])*t12
     punkt5 = {"y": ys, "x": xs}
     return(punkt5)
+
+
+def import_lines(filename):
+    if(verbose):
+        print(f'[Info] Importing file "{filename}"', end="\r")
+    with open(os.path.join("data", filename)) as file:
+        data = np.loadtxt(file, delimiter=";")
+    lines = []
+    for entry in data:
+        lines.append(Line(entry[0], entry[1], entry[2], entry[3]))
+    if(verbose):
+        print(f'[Info] Imported file "{filename}" successfully')
+    return(lines)
+
+
+def plot_geometry(geometry, title):
+    x = []
+    y = []
+    for i in geometry:
+        x.append(i.x1())
+        y.append(i.y1())
+    plt.plot(y, x)
+    plt.legend(["lines"])
+    plt.grid()
+    plt.xlabel("Y")
+    plt.ylabel("X")
+    plt.title(title)
+    plt.show()
 
 
 # Classes
@@ -123,11 +151,11 @@ class Trajectory():
             line (Line-Object): This line will be checked against the geometry.
         """
         intersection = False
-        point1 = {"x": line["x1"], "y": line["y1"]}
-        point2 = {"x": line["x2"], "y": line["y2"]}
+        point1 = {"x": line.x1(), "y": line.y1()}
+        point2 = {"x": line.x2(), "y": line.y2()}
         for i in self.__geometry:
-            point3 = {"x": i["x1"], "y": i["y1"]}
-            point4 = {"x": i["x2"], "y": i["y2"]}
+            point3 = {"x": i.x1(), "y": i.y1()}
+            point4 = {"x": i.x2(), "y": i.y2()}
             intersected_point = geradenschnitt(point1, point2, point3, point4)
             if(point1["x"] <= intersected_point["x"] <= point2["x"] and point3["x"] <= intersected_point["x"] <= point4["x"]):
                 intersection = True
@@ -152,8 +180,8 @@ class Trajectory():
                 direction_try = direction + np.random.normal(0, self.__direction_step_noise)
                 length_try = self.__length_step + np.random.normal(0, self.__length_step_noise)
                 position_try = {"x": None, "y": None}
-                position_try["x"] = self.__position + (m.cos(direction_try) * length_try)
-                position_try["y"] = self.__position + (m.sin(direction_try) * length_try)
+                position_try["x"] = self.__position["x"] + (m.cos(direction_try) * length_try)
+                position_try["y"] = self.__position["y"] + (m.sin(direction_try) * length_try)
                 line_try = Line(self.__position["x"], self.__position["y"], position_try["x"], position_try["y"])
                 if(self.__check_intersection(line_try)):
                     tries += 1
@@ -168,14 +196,33 @@ class Trajectory():
 
 class Line():
     def __init__(self, x1, y1, x2, y2):
-        self.__x1 = x1
-        self.__y1 = y1
-        self.__x2 = x2
-        self.__y2 = y2
+        self.__x1 = float(x1)
+        self.__y1 = float(y1)
+        self.__x2 = float(x2)
+        self.__y2 = float(y2)
+
+    def x1(self):
+        return(self.__x1)
+
+    def y1(self):
+        return(self.__y1)
+
+    def x2(self):
+        return(self.__x2)
+
+    def y2(self):
+        return(self.__y2)
 
 
 # Beginning of the Programm
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    pass
+    filenames = ["EG_polygon_semantic_converted.csv", "1OG_polygon_semantic_converted.csv", "4OG_polygon_semantic_converted.csv"]
+    for filename in filenames:
+        lines = import_lines(filename)
+        trajectory = Trajectory()
+        trajectory.set_geometry(lines)
+        plot_geometry(lines, "Floorplan")
+        trajectory.generate()
+        plot_geometry(trajectory.get_trajectory(), "Title")

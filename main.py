@@ -56,4 +56,5 @@ def run_script(script_name):
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
+    run_script("prepare_data.py")
     run_script("generate_trajectory.py")
