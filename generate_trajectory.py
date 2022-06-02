@@ -109,6 +109,16 @@ def plot_results(datasets, title_label, x_label, y_label, data_label, timestamps
     plt.show()
 
 
+def plot_geometry(geometry1, title):
+    for i in geometry1:
+        plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()], color='blue')
+    plt.grid()
+    plt.xlabel("Y")
+    plt.ylabel("X")
+    plt.title(title)
+    plt.show()
+
+
 def plot_two_geometries(geometry1, geometry2, title):
     for i in geometry1:
         plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()], color='blue')
@@ -148,7 +158,7 @@ class Trajectory():
         # This is the amount of bending, that can occur for each point of the
         # trajectory. The measurement is given in radians.
 
-        self.__length_total = 5000
+        self.__length_total = 500
         # length of the trajectory in footsteps
 
         self.__length_step = 0.9
@@ -274,11 +284,9 @@ class Line():
 
 if __name__ == '__main__':
     filenames = ["EG_polygon_semantic_edited_converted.csv", "1OG_polygon_semantic_edited_converted.csv", "4OG_polygon_semantic_edited_converted.csv"]
-    filenames = ["4OG_polygon_semantic_edited_converted.csv"]
     start_positions = [{"x": 5932827, "y": 566527},
                        {"x": 5932836, "y": 566560},
                        {"x": 5932823, "y": 566526}]
-    start_positions = [{"x": 5932823, "y": 566526}]
     for index, filename in enumerate(filenames):
         lines = import_lines(filename)
         trajectory = Trajectory()
@@ -293,6 +301,6 @@ if __name__ == '__main__':
                      "Trajektorie",
                      "Y",
                      "X",
-                     ["Trajectorie"],
+                     ["Trajektorie"],
                      points["y"])
         plot_two_geometries(lines, trajectory.get(), f'Trajectory with floorplan "{filename}"')
