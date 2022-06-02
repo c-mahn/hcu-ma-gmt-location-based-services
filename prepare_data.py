@@ -74,7 +74,7 @@ if __name__ == '__main__':
         geometry = []
         data = json.loads(import_data(f'{filename}.geojson'))
         for feature in data["features"]:
-            if(feature["properties"]["Type"] == "Wall"):
+            if(feature["properties"]["Type"] == "Wall" or feature["properties"]["Type"] == "Fassade"):
                 if(feature["geometry"] is not None):
                     walls = convert_walls(feature["geometry"])
                     for wall in walls:

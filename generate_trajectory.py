@@ -70,13 +70,9 @@ def import_lines(filename):
 
 
 def plot_geometry(geometry, title):
-    x = []
-    y = []
     for i in geometry:
-        x.append(i.x1())
-        y.append(i.y1())
-    plt.plot(y, x)
-    plt.legend(["lines"])
+        plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()])
+    # plt.legend(["lines"])
     plt.grid()
     plt.xlabel("Y")
     plt.ylabel("X")
@@ -100,11 +96,11 @@ class Trajectory():
         self.__direction_init = 0
         # This is the initial direction the trajectory starts from
 
-        self.__direction_step_noise = 30/180*m.pi
+        self.__direction_step_noise = 15/180*m.pi
         # This is the amount of bending, that can occur for each point of the
         # trajectory. The measurement is given in radians.
 
-        self.__length_total = 100
+        self.__length_total = 250
         # length of the trajectory in footsteps
 
         self.__length_step = 0.9
@@ -123,7 +119,7 @@ class Trajectory():
 
     def set_start_coordinate(self, x, y):
         self.__position_init["x"] = float(x)
-        self.__position_init["x"] = float(y)
+        self.__position_init["y"] = float(y)
 
     def set_start_direction(self, direction):
         self.__direction_init = float(direction)
@@ -156,15 +152,22 @@ class Trajectory():
         for i in self.__geometry:
             point3 = {"x": i.x1(), "y": i.y1()}
             point4 = {"x": i.x2(), "y": i.y2()}
-            intersected_point = geradenschnitt(point1, point2, point3, point4)
-            if(point1["x"] <= intersected_point["x"] <= point2["x"] and point3["x"] <= intersected_point["x"] <= point4["x"]):
-                intersection = True
-            elif(point1["x"] >= intersected_point["x"] >= point2["x"] and point3["x"] <= intersected_point["x"] <= point4["x"]):
-                intersection = True
-            elif(point1["x"] <= intersected_point["x"] <= point2["x"] and point3["x"] >= intersected_point["x"] >= point4["x"]):
-                intersection = True
-            elif(point1["x"] >= intersected_point["x"] >= point2["x"] and point3["x"] >= intersected_point["x"] >= point4["x"]):
-                intersection = True
+            try:
+                intersected_point = geradenschnitt(point1, point2, point3, point4)
+                if(point1["x"] <= intersected_point["x"] <= point2["x"] and point3["x"] <= intersected_point["x"] <= point4["x"]):
+                    intersection = True
+                elif(point1["x"] >= intersected_point["x"] >= point2["x"] and point3["x"] <= intersected_point["x"] <= point4["x"]):
+                    intersection = True
+                elif(point1["x"] <= intersected_point["x"] <= point2["x"] and point3["x"] >= intersected_point["x"] >= point4["x"]):
+                    intersection = True
+                elif(point1["x"] >= intersected_point["x"] >= point2["x"] and point3["x"] >= intersected_point["x"] >= point4["x"]):
+                    intersection = True
+            except(Exception):
+                pass
+                # if(verbose):
+                #     print(f'[WARN] intersection could not be calculated')
+            if(intersection):
+                break
         return(intersection)
 
     def generate(self):
@@ -172,12 +175,15 @@ class Trajectory():
         This method generates the trajectory.
         """
         direction = self.__direction_init
+        self.__position = self.__position_init
         path = []
         path.append(self.__position_init)
         for i in range(self.__length_total):
             tries = 0
-            while(tries <= 1000):
-                direction_try = direction + np.random.normal(0, self.__direction_step_noise)
+            direction_try = direction + np.random.normal(0, self.__direction_step_noise)
+            while(tries < 100):
+                # print(f'{tries}    ', end="\r")
+                direction_try += np.random.normal(0, self.__direction_step_noise)
                 length_try = self.__length_step + np.random.normal(0, self.__length_step_noise)
                 position_try = {"x": None, "y": None}
                 position_try["x"] = self.__position["x"] + (m.cos(direction_try) * length_try)
@@ -187,11 +193,14 @@ class Trajectory():
                     tries += 1
                 else:
                     self.__trajectory.append(line_try)
+                    direction = direction_try
+                    self.__position = position_try
                     break
+            if(verbose):
+                print(f'[INFO][{i+1}/{self.__length_total}] Generating trajectory', end="\r")
 
     def get_trajectory(self):
         return(self.__trajectory)
-
 
 
 class Line():
@@ -219,10 +228,21 @@ class Line():
 
 if __name__ == '__main__':
     filenames = ["EG_polygon_semantic_converted.csv", "1OG_polygon_semantic_converted.csv", "4OG_polygon_semantic_converted.csv"]
-    for filename in filenames:
+    start_positions = [{"x": 566522, "y": 5932816},
+                       {"x": 566511, "y": 5932803},
+                       {"x": 566508, "y": 5932802}]
+    for index, filename in enumerate(filenames):
         lines = import_lines(filename)
         trajectory = Trajectory()
         trajectory.set_geometry(lines)
-        plot_geometry(lines, "Floorplan")
+        # plot_geometry(lines, "Floorplan")
+        trajectory.set_start_coordinate(start_positions[index]["x"], start_positions[index]["y"])
+        trajectory.set_start_direction(80/180*m.pi)
         trajectory.generate()
-        plot_geometry(trajectory.get_trajectory(), "Title")
+        plot_geometry(trajectory.get_trajectory(), "Trajectory")
+        all_geom = []
+        for i in trajectory.get_trajectory():
+            all_geom.append(i)
+        for i in lines:
+            all_geom.append(i)
+        plot_geometry(all_geom, f'Trajectory with floorplan "{filename}"')
