@@ -100,7 +100,7 @@ class Trajectory():
         # This is the amount of bending, that can occur for each point of the
         # trajectory. The measurement is given in radians.
 
-        self.__length_total = 250
+        self.__length_total = 500
         # length of the trajectory in footsteps
 
         self.__length_step = 0.9
