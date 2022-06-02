@@ -69,8 +69,8 @@ def import_lines(filename):
     return(lines)
 
 
-def plot_geometry(geometry, title):
-    for i in geometry:
+def plot_line_segments(line_segments, title):
+    for i in line_segments:
         plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()])
     # plt.legend(["lines"])
     plt.grid()
@@ -78,6 +78,45 @@ def plot_geometry(geometry, title):
     plt.ylabel("X")
     plt.title(title)
     plt.show()
+
+
+def plot_results(datasets, title_label, x_label, y_label, data_label, timestamps=None):
+    """
+    This function plots graphs.
+
+    Args:
+        datasets ([[float]]): A list with datasets a lists with floating-point
+        
+                              numbers
+        title_label (str): This is the tile of the plot
+        x_label (str): This is the label of the x-axis
+        y_label (str): This is the label of the y-axis
+        data_label ([str]): This is a list with labels of the datasets
+        timestamps ([float], optional): By using a list of floating-point
+                                        numbers the data get's plotted on a
+                                        time-axis. If nothing is provided the
+                                        values will be plotted equidistant.
+    """
+    for i, dataset in enumerate(datasets):
+        if(timestamps==None):
+            timestamps = range(len(dataset))
+        plt.plot(timestamps, dataset)
+    plt.legend(data_label)
+    plt.grid()
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(title_label)
+    plt.show()
+
+
+def line_segments_to_points(line_segments):
+    points = {"x": [], "y": []}
+    points["x"].append(line_segments[0].x1())
+    points["y"].append(line_segments[0].y1())
+    for line in line_segments:
+        points["x"].append(line.x2())
+        points["y"].append(line.y2())
+    return(points)
 
 
 # Classes
@@ -96,11 +135,11 @@ class Trajectory():
         self.__direction_init = 0
         # This is the initial direction the trajectory starts from
 
-        self.__direction_step_noise = 15/180*m.pi
+        self.__direction_step_noise = 12/180*m.pi
         # This is the amount of bending, that can occur for each point of the
         # trajectory. The measurement is given in radians.
 
-        self.__length_total = 500
+        self.__length_total = 2500
         # length of the trajectory in footsteps
 
         self.__length_step = 0.9
@@ -199,7 +238,7 @@ class Trajectory():
             if(verbose):
                 print(f'[INFO][{i+1}/{self.__length_total}] Generating trajectory', end="\r")
 
-    def get_trajectory(self):
+    def get(self):
         return(self.__trajectory)
 
 
@@ -229,7 +268,7 @@ class Line():
 if __name__ == '__main__':
     filenames = ["EG_polygon_semantic_converted.csv", "1OG_polygon_semantic_converted.csv", "4OG_polygon_semantic_converted.csv"]
     start_positions = [{"x": 566522, "y": 5932816},
-                       {"x": 566511, "y": 5932803},
+                       {"x": 566560, "y": 5932819},
                        {"x": 566508, "y": 5932802}]
     for index, filename in enumerate(filenames):
         lines = import_lines(filename)
@@ -239,10 +278,17 @@ if __name__ == '__main__':
         trajectory.set_start_coordinate(start_positions[index]["x"], start_positions[index]["y"])
         trajectory.set_start_direction(80/180*m.pi)
         trajectory.generate()
-        plot_geometry(trajectory.get_trajectory(), "Trajectory")
+        # plot_line_segments(trajectory.get(), "Trajectory")
+        points = line_segments_to_points(trajectory.get())
+        plot_results([points["x"]],
+                     "Trajektorie",
+                     "Y",
+                     "X",
+                     ["Trajectorie"],
+                     points["y"])
         all_geom = []
-        for i in trajectory.get_trajectory():
+        for i in trajectory.get():
             all_geom.append(i)
         for i in lines:
             all_geom.append(i)
-        plot_geometry(all_geom, f'Trajectory with floorplan "{filename}"')
+        plot_line_segments(all_geom, f'Trajectory with floorplan "{filename}"')
