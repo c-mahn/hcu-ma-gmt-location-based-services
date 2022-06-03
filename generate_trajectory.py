@@ -19,6 +19,7 @@
 # import re
 # from turtle import position
 # from scipy import interpolate
+from turtle import position
 import numpy as np
 import math as m
 # import sys
@@ -154,11 +155,11 @@ class Trajectory():
         self.__direction_init = 0
         # This is the initial direction the trajectory starts from
 
-        self.__direction_step_noise = 12/180*m.pi
+        self.__direction_step_noise = 10/180*m.pi
         # This is the amount of bending, that can occur for each point of the
         # trajectory. The measurement is given in radians.
 
-        self.__length_total = 500
+        self.__length_total = 200
         # length of the trajectory in footsteps
 
         self.__length_step = 0.9
@@ -174,6 +175,8 @@ class Trajectory():
         self.__trajectory = []
         # This is a list, which will contain the generated trajectory
         # consisting of line segments.
+
+        self.__tries = 3
 
     def set_start_coordinate(self, x, y):
         self.__position_init["x"] = float(x)
@@ -255,6 +258,33 @@ class Trajectory():
             if(verbose):
                 print(f'[INFO][{i+1}/{self.__length_total}] Generating trajectory', end="\r")
 
+    def generate2(self):
+        direction = [self.__direction_init]
+        position = [self.__position_init]
+        tries = [0]
+        while(len(position) <= self.__length_total):
+            while(tries[-1] < self.__tries):
+                if(verbose):
+                    print(f'[INFO][{len(position)+1}/{self.__length_total}] Generating trajectory   ', end="\r")
+                tries[-1] += 1
+                direction_try = np.random.normal(direction[-1], self.__direction_step_noise)
+                length_try = np.random.normal(self.__length_step, self.__length_step_noise)
+                position_try = {"x": None, "y": None}
+                position_try["x"] = position[-1]["x"] + (m.cos(direction_try) * length_try)
+                position_try["y"] = position[-1]["y"] + (m.sin(direction_try) * length_try)
+                line_try = Line(position[-1]["x"], position[-1]["y"], position_try["x"], position_try["y"])
+                if(self.__check_intersection(line_try)):
+                    pass
+                else:
+                    direction.append(direction_try)
+                    position.append(position_try)
+                    tries.append(0)
+                    self.__trajectory.append(line_try)
+            direction.pop(-1)
+            position.pop(-1)
+            tries.pop(-1)
+            self.__trajectory.pop(-1)
+
     def get(self):
         return(self.__trajectory)
 
@@ -294,7 +324,7 @@ if __name__ == '__main__':
         # plot_geometry(lines, "Floorplan")
         trajectory.set_start_coordinate(start_positions[index]["x"], start_positions[index]["y"])
         trajectory.set_start_direction(80/180*m.pi)
-        trajectory.generate()
+        trajectory.generate2()
         # plot_line_segments(trajectory.get(), "Trajectory")
         points = line_segments_to_points(trajectory.get())
         plot_results([points["x"]],
