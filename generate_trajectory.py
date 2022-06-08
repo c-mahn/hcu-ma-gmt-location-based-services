@@ -155,14 +155,17 @@ class Trajectory():
         self.__direction_init = 0
         # This is the initial direction the trajectory starts from
 
-        self.__direction_step_noise = 10/180*m.pi
-        # This is the amount of bending, that can occur for each point of the
-        # trajectory. The measurement is given in radians.
+        self.__direction_step_noise = 8/180*m.pi
+        # This is the amount of bending, that occurs as a base angle-change.
 
-        self.__length_total = 200
+        self.__direction_try_noise_add = 2/180*m.pi
+        # This is the amount of bending, that get's applied for areas with
+        # higher generation-difficulty.
+
+        self.__length_total = 500
         # length of the trajectory in footsteps
 
-        self.__length_step = 0.9
+        self.__length_step = 0.8
         # length of the average footstep in meters
 
         self.__length_step_noise = 0.15
@@ -176,7 +179,19 @@ class Trajectory():
         # This is a list, which will contain the generated trajectory
         # consisting of line segments.
 
-        self.__tries = 3
+        self.__tries = 5
+        # This variable sets the number of tries a step will be generated,
+        # before stepping back one step recursively.
+
+        self.__check_length_buffer = 0.6
+        # This variable controls the behaviour for the trajectory to avoid
+        # direct wall-contact. The step will be extended by this amount in
+        # meters before checking intersection with walls.
+
+        self.__check_width_buffer = 0.4
+        # This variable controls the behaviour for the trajectory to avoid
+        # direct wall-contact. The step will be widened by this amount in
+        # meters before checking intersection with walls.
 
     def set_start_coordinate(self, x, y):
         self.__position_init["x"] = float(x)
@@ -231,9 +246,9 @@ class Trajectory():
                 break
         return(intersection)
 
-    def generate(self):
+    def generate_legacy(self):
         """
-        This method generates the trajectory.
+        This method generates the trajectory using a iterative aproach.
         """
         direction = self.__direction_init
         position = self.__position_init
@@ -258,28 +273,58 @@ class Trajectory():
             if(verbose):
                 print(f'[INFO][{i+1}/{self.__length_total}] Generating trajectory', end="\r")
 
-    def generate2(self):
+    def generate(self):
+        """
+        This function generates the trajectory recursively.
+        """
         direction = [self.__direction_init]
         position = [self.__position_init]
         tries = [0]
         while(len(position) <= self.__length_total):
+            if(verbose):
+                print(f'[INFO][{len(position)+1}/{self.__length_total}] Generating trajectory   ', end="\r")
             while(tries[-1] < self.__tries):
-                if(verbose):
-                    print(f'[INFO][{len(position)+1}/{self.__length_total}] Generating trajectory   ', end="\r")
                 tries[-1] += 1
-                direction_try = np.random.normal(direction[-1], self.__direction_step_noise)
+                direction_try = np.random.normal(direction[-1], (self.__direction_step_noise + (tries[-1] * self.__direction_try_noise_add)))
                 length_try = np.random.normal(self.__length_step, self.__length_step_noise)
+
+                # Line-segment for the trajectory
                 position_try = {"x": None, "y": None}
                 position_try["x"] = position[-1]["x"] + (m.cos(direction_try) * length_try)
                 position_try["y"] = position[-1]["y"] + (m.sin(direction_try) * length_try)
                 line_try = Line(position[-1]["x"], position[-1]["y"], position_try["x"], position_try["y"])
-                if(self.__check_intersection(line_try)):
+
+                # Line-segments for the Intersection-Check
+                position_check1_1 = {"x": None, "y": None}
+                position_check1_2 = {"x": None, "y": None}
+                position_check2_1 = {"x": None, "y": None}
+                position_check2_2 = {"x": None, "y": None}
+                position_check1_1["x"] = position[-1]["x"] + (m.cos(direction_try - (90/180*m.pi)) * (self.__check_width_buffer))
+                position_check1_1["y"] = position[-1]["y"] + (m.sin(direction_try - (90/180*m.pi)) * (self.__check_width_buffer))
+                position_check1_2["x"] = position_check1_1["x"] + (m.cos(direction_try) * (length_try + self.__check_length_buffer))
+                position_check1_2["y"] = position_check1_1["y"] + (m.sin(direction_try) * (length_try + self.__check_length_buffer))
+                position_check2_1["x"] = position[-1]["x"] + (m.cos(direction_try + (90/180*m.pi)) * (self.__check_width_buffer))
+                position_check2_1["y"] = position[-1]["y"] + (m.sin(direction_try + (90/180*m.pi)) * (self.__check_width_buffer))
+                position_check2_2["x"] = position_check2_1["x"] + (m.cos(direction_try) * (length_try + self.__check_length_buffer))
+                position_check2_2["y"] = position_check2_1["y"] + (m.sin(direction_try) * (length_try + self.__check_length_buffer))
+                line_check_1 = Line(position_check1_1["x"], position_check1_1["y"], position_check1_2["x"], position_check1_2["y"])
+                line_check_2 = Line(position_check2_1["x"], position_check2_1["y"], position_check2_2["x"], position_check2_2["y"])
+                line_check_3 = Line(position_check1_1["x"], position_check1_1["y"], position_check2_1["x"], position_check2_1["y"])
+                line_check_4 = Line(position_check1_1["x"], position_check1_1["y"], position_check2_2["x"], position_check2_2["y"])
+
+                # Intersection-Check and Saving if Line-Segments
+                if(self.__check_intersection(line_check_1) or
+                   self.__check_intersection(line_check_2) or
+                   self.__check_intersection(line_check_3) or
+                   self.__check_intersection(line_check_4)):
                     pass
                 else:
                     direction.append(direction_try)
                     position.append(position_try)
                     tries.append(0)
                     self.__trajectory.append(line_try)
+                    if(len(self.__trajectory) > self.__length_total):
+                        break
             direction.pop(-1)
             position.pop(-1)
             tries.pop(-1)
@@ -324,7 +369,7 @@ if __name__ == '__main__':
         # plot_geometry(lines, "Floorplan")
         trajectory.set_start_coordinate(start_positions[index]["x"], start_positions[index]["y"])
         trajectory.set_start_direction(80/180*m.pi)
-        trajectory.generate2()
+        trajectory.generate()
         # plot_line_segments(trajectory.get(), "Trajectory")
         points = line_segments_to_points(trajectory.get())
         plot_results([points["x"]],
