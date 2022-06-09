@@ -130,6 +130,20 @@ def plot_two_geometries(geometry1, geometry2, title):
     plt.ylabel("X")
     plt.title(title)
     plt.show()
+
+
+def plot_three_geometries(geometry1, geometry2, geometry3, title):
+    for i in geometry1:
+        plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()], color='blue')
+    for i in geometry2:
+        plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()], color='green')
+    for i in geometry3:
+        plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()], color='red')
+    plt.grid()
+    plt.xlabel("Y")
+    plt.ylabel("X")
+    plt.title(title)
+    plt.show()
     
 
 
@@ -158,7 +172,7 @@ class Trajectory():
         self.__direction_step_noise = 8/180*m.pi
         # This is the amount of bending, that occurs as a base angle-change.
 
-        self.__direction_try_noise_add = 2/180*m.pi
+        self.__direction_try_noise_add = 4/180*m.pi
         # This is the amount of bending, that get's applied for areas with
         # higher generation-difficulty.
 
@@ -179,7 +193,11 @@ class Trajectory():
         # This is a list, which will contain the generated trajectory
         # consisting of line segments.
 
-        self.__tries = 5
+        self.__not_trajectory = []
+        # This is a list with all Line-segments, that were discarded in the
+        # trajectory-generation.
+
+        self.__tries = 3
         # This variable sets the number of tries a step will be generated,
         # before stepping back one step recursively.
 
@@ -328,10 +346,19 @@ class Trajectory():
             direction.pop(-1)
             position.pop(-1)
             tries.pop(-1)
-            self.__trajectory.pop(-1)
+            self.__not_trajectory.append(self.__trajectory.pop(-1))
+            if(len(self.__not_trajectory)%1000 == 0):
+                for i in range(50):
+                    direction.pop(-1)
+                    position.pop(-1)
+                    tries.pop(-1)
+                    self.__not_trajectory.append(self.__trajectory.pop(-1))
 
     def get(self):
         return(self.__trajectory)
+
+    def get_garbage(self):
+        return(self.__not_trajectory)
 
 
 class Line():
@@ -379,3 +406,4 @@ if __name__ == '__main__':
                      ["Trajektorie"],
                      points["y"])
         plot_two_geometries(lines, trajectory.get(), f'Trajectory with floorplan "{filename}"')
+        plot_three_geometries(lines, trajectory.get(), trajectory.get_garbage(), f'Trajectory with floorplan "{filename}"')
