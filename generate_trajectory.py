@@ -144,7 +144,6 @@ def plot_three_geometries(geometry1, geometry2, geometry3, title):
     plt.ylabel("X")
     plt.title(title)
     plt.show()
-    
 
 
 def line_segments_to_points(line_segments):
@@ -155,6 +154,37 @@ def line_segments_to_points(line_segments):
         points["x"].append(line.x2())
         points["y"].append(line.y2())
     return(points)
+
+
+def create_multiple_trajectories(trajectory, ammount):
+    """
+    This function takes one trajectory-object with specified parameters and
+    generates multiple trajectories from it.
+
+    Args:
+        trajectory (trajectory-object): Trajectory-object with specified parameters
+        ammount (int): Ammount of trajectories to be generated
+    """
+    trajectories = []
+    for i in range(ammount):
+        print(f'[INFO][{i+1}/{ammount}] Generating multiple trajectories')
+        trajectory.generate()
+        trajectories.append(trajectory.get())
+    return(trajectories)
+
+
+def write_trajectory(points, filename):
+    """
+    This function takes a list of points and writes them to a text-file.
+
+    Args:
+        points ({"x": [float], "y": [float]}): A list of points formated in a dictionary
+        filename (str): the filename where the points are written to
+    """
+    with open(os.path.join("data", filename), "w") as f:
+        for i, x in enumerate(points["x"]):
+            f.write(f'{x}, {points["y"][i]}\n')
+    return(None)
 
 
 # Classes
@@ -169,14 +199,14 @@ class Trajectory():
         self.__direction_init = 0
         # This is the initial direction the trajectory starts from
 
-        self.__direction_step_noise = 8/180*m.pi
+        self.__direction_step_noise = 10/180*m.pi
         # This is the amount of bending, that occurs as a base angle-change.
 
-        self.__direction_try_noise_add = 4/180*m.pi
+        self.__direction_try_noise_add = 5/180*m.pi
         # This is the amount of bending, that get's applied for areas with
         # higher generation-difficulty.
 
-        self.__length_total = 500
+        self.__length_total = 250
         # length of the trajectory in footsteps
 
         self.__length_step = 0.8
@@ -197,16 +227,16 @@ class Trajectory():
         # This is a list with all Line-segments, that were discarded in the
         # trajectory-generation.
 
-        self.__tries = 3
+        self.__tries = 5
         # This variable sets the number of tries a step will be generated,
         # before stepping back one step recursively.
 
-        self.__check_length_buffer = 0.6
+        self.__check_length_buffer = 0.4
         # This variable controls the behaviour for the trajectory to avoid
         # direct wall-contact. The step will be extended by this amount in
         # meters before checking intersection with walls.
 
-        self.__check_width_buffer = 0.4
+        self.__check_width_buffer = 0.3
         # This variable controls the behaviour for the trajectory to avoid
         # direct wall-contact. The step will be widened by this amount in
         # meters before checking intersection with walls.
@@ -270,6 +300,7 @@ class Trajectory():
         """
         direction = self.__direction_init
         position = self.__position_init
+        self.__trajectory = []
         for i in range(self.__length_total):
             tries = 0
             direction_try = direction
@@ -297,6 +328,7 @@ class Trajectory():
         """
         direction = [self.__direction_init]
         position = [self.__position_init]
+        self.__trajectory = []
         tries = [0]
         while(len(position) <= self.__length_total):
             if(verbose):
@@ -347,12 +379,14 @@ class Trajectory():
             position.pop(-1)
             tries.pop(-1)
             self.__not_trajectory.append(self.__trajectory.pop(-1))
+            """
             if(len(self.__not_trajectory)%1000 == 0):
                 for i in range(50):
                     direction.pop(-1)
                     position.pop(-1)
                     tries.pop(-1)
                     self.__not_trajectory.append(self.__trajectory.pop(-1))
+                    """
 
     def get(self):
         return(self.__trajectory)
@@ -396,14 +430,17 @@ if __name__ == '__main__':
         # plot_geometry(lines, "Floorplan")
         trajectory.set_start_coordinate(start_positions[index]["x"], start_positions[index]["y"])
         trajectory.set_start_direction(80/180*m.pi)
-        trajectory.generate()
+        trajectories = create_multiple_trajectories(trajectory, 100)
         # plot_line_segments(trajectory.get(), "Trajectory")
-        points = line_segments_to_points(trajectory.get())
-        plot_results([points["x"]],
-                     "Trajektorie",
-                     "Y",
-                     "X",
-                     ["Trajektorie"],
-                     points["y"])
-        plot_two_geometries(lines, trajectory.get(), f'Trajectory with floorplan "{filename}"')
-        plot_three_geometries(lines, trajectory.get(), trajectory.get_garbage(), f'Trajectory with floorplan "{filename}"')
+        for i, e in enumerate(trajectories):
+            points = line_segments_to_points(e)
+            write_trajectory(points, f'trajectory_{filename[0:-4]}_{i+1:05d}.csv')
+            
+        # plot_results([points["x"]],
+        #              "Trajektorie",
+        #              "Y",
+        #              "X",
+        #              ["Trajektorie"],
+        #              points["y"])
+        # plot_two_geometries(lines, trajectory.get(), f'Trajectory with floorplan "{filename}"')
+        # plot_three_geometries(lines, trajectory.get(), trajectory.get_garbage(), f'Trajectory with floorplan "{filename}"')
