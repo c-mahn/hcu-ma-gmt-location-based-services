@@ -430,7 +430,7 @@ if __name__ == '__main__':
         # plot_geometry(lines, "Floorplan")
         trajectory.set_start_coordinate(start_positions[index]["x"], start_positions[index]["y"])
         trajectory.set_start_direction(80/180*m.pi)
-        trajectories = create_multiple_trajectories(trajectory, 100)
+        trajectories = create_multiple_trajectories(trajectory, 500)
         # plot_line_segments(trajectory.get(), "Trajectory")
         for i, e in enumerate(trajectories):
             points = line_segments_to_points(e)
