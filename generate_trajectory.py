@@ -430,17 +430,17 @@ if __name__ == '__main__':
         # plot_geometry(lines, "Floorplan")
         trajectory.set_start_coordinate(start_positions[index]["x"], start_positions[index]["y"])
         trajectory.set_start_direction(80/180*m.pi)
-        trajectories = create_multiple_trajectories(trajectory, 500)
+        trajectories = create_multiple_trajectories(trajectory, 1)
         # plot_line_segments(trajectory.get(), "Trajectory")
         for i, e in enumerate(trajectories):
             points = line_segments_to_points(e)
             write_trajectory(points, f'trajectory_{filename[0:-4]}_{i+1:05d}.csv')
             
-        # plot_results([points["x"]],
-        #              "Trajektorie",
-        #              "Y",
-        #              "X",
-        #              ["Trajektorie"],
-        #              points["y"])
-        # plot_two_geometries(lines, trajectory.get(), f'Trajectory with floorplan "{filename}"')
-        # plot_three_geometries(lines, trajectory.get(), trajectory.get_garbage(), f'Trajectory with floorplan "{filename}"')
+        plot_results([points["x"]],
+                     "Trajektorie",
+                     "Y",
+                     "X",
+                     ["Trajektorie"],
+                     points["y"])
+        plot_two_geometries(lines, trajectory.get(), f'Trajectory with floorplan "{filename}"')
+        plot_three_geometries(lines, trajectory.get(), trajectory.get_garbage(), f'Trajectory with floorplan "{filename}"')
