@@ -19,6 +19,7 @@
 # import re
 # from turtle import position
 # from scipy import interpolate
+from concurrent.futures import process
 from turtle import position
 import numpy as np
 import math as m
@@ -27,6 +28,8 @@ import os
 import matplotlib.pyplot as plt
 # from scipy.fft import fft, fftfreq
 # from scipy import signal
+import multiprocessing as mp
+import copy
 
 
 # -----------------------------------------------------------------------------
@@ -156,6 +159,11 @@ def line_segments_to_points(line_segments):
     return(points)
 
 
+def generate_trajectory(trajectory):
+    trajectory.generate()
+    return(trajectory.get())
+
+
 def create_multiple_trajectories(trajectory, ammount):
     """
     This function takes one trajectory-object with specified parameters and
@@ -166,10 +174,16 @@ def create_multiple_trajectories(trajectory, ammount):
         ammount (int): Ammount of trajectories to be generated
     """
     trajectories = []
+    trajectory_objects = []
+
+    # Making multiple copies of the trajectory-object
     for i in range(ammount):
-        print(f'[INFO][{i+1}/{ammount}] Generating multiple trajectories')
-        trajectory.generate()
-        trajectories.append(trajectory.get())
+        print(f'[INFO][{i+1}/{ammount}] Generating multiple trajectories', end="\r")
+        trajectory_objects.append(copy.copy(trajectory))
+
+    # Processing the gerneration and retrieval of trajectories in parallel
+    processing = mp.Pool()
+    trajectories = processing.map(generate_trajectory, trajectory_objects)
     return(trajectories)
 
 
@@ -332,7 +346,8 @@ class Trajectory():
         tries = [0]
         while(len(position) <= self.__length_total):
             if(verbose):
-                print(f'[INFO][{len(position)+1}/{self.__length_total}] Generating trajectory   ', end="\r")
+                # print(f'[INFO][{len(position)+1}/{self.__length_total}] Generating trajectory   ', end="\r")
+                pass
             while(tries[-1] < self.__tries):
                 tries[-1] += 1
                 direction_try = np.random.normal(direction[-1], (self.__direction_step_noise + (tries[-1] * self.__direction_try_noise_add)))
@@ -430,17 +445,16 @@ if __name__ == '__main__':
         # plot_geometry(lines, "Floorplan")
         trajectory.set_start_coordinate(start_positions[index]["x"], start_positions[index]["y"])
         trajectory.set_start_direction(80/180*m.pi)
-        trajectories = create_multiple_trajectories(trajectory, 1)
+        trajectories = create_multiple_trajectories(trajectory, 1000)
         # plot_line_segments(trajectory.get(), "Trajectory")
-        for i, e in enumerate(trajectories):
-            points = line_segments_to_points(e)
+        for i, current_trajectory in enumerate(trajectories):
+            points = line_segments_to_points(current_trajectory)
             write_trajectory(points, f'trajectory_{filename[0:-4]}_{i+1:05d}.csv')
-            
-        plot_results([points["x"]],
-                     "Trajektorie",
-                     "Y",
-                     "X",
-                     ["Trajektorie"],
-                     points["y"])
-        plot_two_geometries(lines, trajectory.get(), f'Trajectory with floorplan "{filename}"')
-        plot_three_geometries(lines, trajectory.get(), trajectory.get_garbage(), f'Trajectory with floorplan "{filename}"')
+            # plot_results([points["x"]],
+            #             "Trajektorie",
+            #             "Y",
+            #             "X",
+            #             ["Trajektorie"],
+            #             points["y"])
+            # plot_two_geometries(lines, current_trajectory, f'Trajectory with floorplan "{filename}"')
+            # plot_three_geometries(lines, current_trajectory, trajectory.get_garbage(), f'Trajectory with floorplan "{filename}"')
