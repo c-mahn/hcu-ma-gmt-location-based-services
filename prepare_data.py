@@ -41,13 +41,13 @@ verbose = True  # Shows more debugging information
 def import_data(input_filename):
     # Import of measurements
     if(verbose):
-        print(f'[Info] Opening file "{input_filename}"', end="\r")
+        print(f'[INFO] Opening file "{input_filename}"', end="\r")
     with open(os.path.join("data", input_filename)) as file:
         if(verbose):
-            print(f'[Info] Reading file "{input_filename}"', end="\r")
+            print(f'[INFO] Reading file "{input_filename}"', end="\r")
         data = file.readlines()
     if(verbose):
-        print(f'[Info] Read file "{input_filename}" successfully')
+        print(f'[INFO] Read file "{input_filename}" successfully')
     text = ""
     for i in data:
         text = f'{text}{i.strip()}'
@@ -79,7 +79,7 @@ if __name__ == '__main__':
                     walls = convert_walls(feature["geometry"])
                     for wall in walls:
                         geometry.append(wall)
-        print(len(geometry))
+        print(f'[INFO] Fetched {len(geometry)} line-segments')
         with open(os.path.join("data", f'{filename}_converted.csv'), "w") as file:
             for j in geometry:
                 file.write(f'{j[1]}; {j[0]}; {j[3]}; {j[2]}\n')

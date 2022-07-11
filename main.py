@@ -27,6 +27,7 @@ import platform
 
 verbose = True  # Shows more debugging information
 
+
 # Functions
 # -----------------------------------------------------------------------------
 
@@ -39,11 +40,11 @@ def run_script(script_name):
     """
     if(platform.system() == "Linux"):
         if(verbose):
-            print(f'[Info] Executing "{script_name}" as Linux-User')
+            print(f'[INFO] Executing "{script_name}" as Linux-User')
         os.system(f'python3 {script_name}')  # Run on Linux
     elif(platform.system() == "Windows"):
         if(verbose):
-            print(f'[Info] Executing "{script_name}" as Windows-User')
+            print(f'[INFO] Executing "{script_name}" as Windows-User')
         user = os.environ.get('USERNAME')
         os.system(f'C:/Users/{user}/anaconda3/python.exe {script_name}')  # Run on Windows
 

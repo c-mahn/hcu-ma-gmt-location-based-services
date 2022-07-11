@@ -177,12 +177,22 @@ def create_multiple_trajectories(trajectory, ammount):
 
     # Making multiple copies of the trajectory-object
     for i in range(ammount):
-        print(f'[INFO][{i+1}/{ammount}] Generating multiple trajectories', end="\r")
+        print(f'[INFO][1/2][{i+1}/{ammount}] Copying trajectory', end="\r")
         trajectory_objects.append(copy.copy(trajectory))
+    if(verbose):
+        print("")
 
     # Processing the gerneration and retrieval of trajectories in parallel
+    if(verbose):
+        print(f'[INFO][2/2] Generating {ammount} trajectories')
+        if(ammount >= 50):
+            print(f'[WARN] This might take some time to process...')
+        elif(ammount >= 1000):
+            print(f'[DANGER] This might be extremely long to process...')
     processing = mp.Pool()
     trajectories = processing.map(generate_trajectory, trajectory_objects)
+    # if(verbose):
+    #     print("")
     return(trajectories)
 
 
@@ -196,7 +206,7 @@ def write_trajectory(points, filename):
     """
     with open(os.path.join("data", filename), "w") as f:
         for i, x in enumerate(points["x"]):
-            f.write(f'{x}, {points["y"][i]}\n')
+            f.write(f'{x}; {points["y"][i]}\n')
     return(None)
 
 
@@ -345,7 +355,7 @@ class Trajectory():
         tries = [0]
         while(len(position) <= self.__length_total):
             if(verbose):
-                # print(f'[INFO][{len(position)+1}/{self.__length_total}] Generating trajectory   ', end="\r")
+                # print(f'[INFO][{len(position)+1}/{self.__length_total}] Generating trajectory ', end="\r")
                 pass
             while(tries[-1] < self.__tries):
                 tries[-1] += 1
@@ -401,6 +411,8 @@ class Trajectory():
                     tries.pop(-1)
                     self.__not_trajectory.append(self.__trajectory.pop(-1))
                     """
+        # if(verbose):
+        #     print(f'X', end="")
 
     def get(self):
         return(self.__trajectory)
@@ -428,6 +440,21 @@ class Line():
     def y2(self):
         return(self.__y2)
 
+    def set_x1(self, x1):
+        self.__x1 = x1
+
+    def set_y1(self, y1):
+        self.__y1 = y1
+
+    def set_x2(self, x2):
+        self.__x2 = x2
+
+    def set_y2(self, y2):
+        self.__y2 = y2
+    
+    def delta_x(self):
+        return(self.__x2-self.__x1)
+
 
 # Beginning of the Programm
 # -----------------------------------------------------------------------------
@@ -444,7 +471,7 @@ if __name__ == '__main__':
         # plot_geometry(lines, "Floorplan")
         trajectory.set_start_coordinate(start_positions[index]["x"], start_positions[index]["y"])
         trajectory.set_start_direction(80/180*m.pi)
-        trajectories = create_multiple_trajectories(trajectory, 20)
+        trajectories = create_multiple_trajectories(trajectory, 100)
         # plot_line_segments(trajectory.get(), "Trajectory")
         for i, current_trajectory in enumerate(trajectories):
             points = line_segments_to_points(current_trajectory)
