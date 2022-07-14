@@ -82,6 +82,34 @@ def trajectory_to_lines(trajectory):
 
 
 def scale_trajectory(trajectory, mean, stdev):
+    """
+    This function scales a trajectory with a mean and standard deviation.
+
+    Args:
+        trajectory ([Line]): The trajectory consisting of Line-objects in a list.
+        mean (float): The mean scaling factor for each step.
+        stdev (float): the standard deviation for the scaling factor of each step.
+    """
+    if(verbose):
+        print(f'[INFO] Scaling trajectory')
+    trajectory_new = []
+    while(trajectory != []):
+        current_line = trajectory.pop(0)
+        current_scale = np.random.normal(mean, stdev)
+        trajectory_new.append(gt.Line(current_line.x1(),
+                                      current_line.y1(),
+                                      current_line.x1() + (current_line.delta_x()*current_scale),
+                                      current_line.y1() + (current_line.delta_y()*current_scale)))
+        if(trajectory != []):
+            for index, line in enumerate(trajectory):
+                trajectory[index] = gt.Line((current_line.x1()-line.x1())*current_scale+current_line.x1(),
+                                            (current_line.y1()-line.y1())*current_scale+current_line.y1(),
+                                            (current_line.x1()-line.x2())*current_scale+current_line.x1(),
+                                            (current_line.y1()-line.y2())*current_scale+current_line.y1())
+    return(trajectory_new)
+
+
+def rotate_trajectory(trajectory, mean, stdev):
     pass
 
 
@@ -112,3 +140,6 @@ if __name__ == '__main__':
             step_length_noise = abs(np.random.normal(0, 0.025))  # Random scale of each step
             if(verbose):
                 print(f'[INFO][CONFIG] Rotation: {rotation_drift:.5f} ± {rotation_noise:.5f} rad, Scale: {step_length_scale:.5f} ± {step_length_noise:.5f} x')
+            
+            trajectory = scale_trajectory(trajectory, step_length_scale, step_length_noise)
+            gt.write_trajectory(trajectory, f'{dataset}_noised_{trajectory_index+1:05d}.csv')
