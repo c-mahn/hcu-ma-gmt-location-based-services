@@ -134,8 +134,8 @@ def rotate_trajectory(trajectory, mean, stdev):
                                       current_line.y1(),
                                       current_line.x1()+(m.cos(current_line.direction()+current_rotation)*current_line.length()),
                                       current_line.y1()+(m.sin(current_line.direction()+current_rotation)*current_line.length())))
-        delta_x = (current_line.x1()+(m.cos(current_line.direction()+current_rotation)*current_line.length()))-current_line.x2()
-        delta_y = (current_line.y1()+(m.sin(current_line.direction()+current_rotation)*current_line.length()))-current_line.y2()
+        delta_x = trajectory_new[-1].x2()-current_line.x2()
+        delta_y = trajectory_new[-1].y2()-current_line.y2()
 
         # Scaling the rest of the lines attached to the current line
         if(trajectory != []):
