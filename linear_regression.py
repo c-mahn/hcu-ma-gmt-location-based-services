@@ -45,7 +45,7 @@ verbose = True  # Shows more debugging information
 def import_trajectory(filename):
     """
     This function imports simple trajectories, that are represented as a list
-    of 2D points.
+    of Line-objects.
 
     Args:
         filename ("str"): name of the file, where the trajectory is saved in
@@ -54,10 +54,10 @@ def import_trajectory(filename):
         print(f'[Info] Importing file "{filename}"')
     with open(os.path.join("data", filename)) as file:
         data = np.loadtxt(file, delimiter=";")
-    points = []
+    lines = []
     for i in data:
-        points.append([i[0], i[1]])
-    return(points)
+        lines.append(gt.Line(i[1], i[2], i[3], i[4]))
+    return(lines)
 
 
 def trajectory_to_lines(trajectory):
@@ -97,16 +97,13 @@ if __name__ == '__main__':
     datasets = ["trajectory_EG_polygon_semantic_edited_converted",
                 "trajectory_1OG_polygon_semantic_edited_converted",
                 "trajectory_4OG_polygon_semantic_edited_converted"]
-    dataset_lengths = [1000, 1000, 1000]
+    dataset_lengths = [10, 10, 10]
     
     # Import of individual trajectories
     for dataset_index, dataset in enumerate(datasets):
         dataset_length = dataset_lengths[dataset_index]
         for trajectory_index in range(dataset_length):
             trajectory = import_trajectory(f'{dataset}_{trajectory_index+1:05d}.csv')
-            
-            # Converting trajectory to Line-segments
-            lines = trajectory_to_lines(trajectory)
             
             # Generating sensor-noise parameters
             rotation_drift = np.random.normal(0, 0.5/200*m.pi)  # One-sided drift at each step
