@@ -171,9 +171,9 @@ if __name__ == '__main__':
             trajectory = import_trajectory(f'{dataset}_{trajectory_index+1:05d}.csv')
             
             # Generating sensor-noise parameters
-            rotation_drift = np.random.normal(0, 0.5/200*m.pi)  # One-sided drift at each step
+            rotation_drift = np.random.normal(0, 0.1/200*m.pi)  # One-sided drift at each step
             rotation_noise = abs(np.random.normal(0, 0.2/200*m.pi))  # Rotation angle noise
-            step_length_scale = np.random.normal(1, 0.1)  # Scale of each step
+            step_length_scale = np.random.normal(1, 0.05)  # Scale of each step
             step_length_noise = abs(np.random.normal(0, 0.025))  # Random scale of each step
             if(verbose):
                 print(f'[INFO][CONFIG] Rotation: {rotation_drift:.5f} ± {rotation_noise:.5f} rad, Scale: {step_length_scale:.5f} ± {step_length_noise:.5f} x')
