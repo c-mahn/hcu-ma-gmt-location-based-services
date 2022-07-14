@@ -442,6 +442,11 @@ class Line():
     
     def delta_x(self):
         return(self.__x2-self.__x1)
+    
+    def delta_y(self):
+        return(self.__y2-self.__y1)
+    
+    def direction(self.)
 
 # Beginning of the Programm
 # -----------------------------------------------------------------------------
