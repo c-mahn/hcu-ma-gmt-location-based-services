@@ -31,8 +31,6 @@ import matplotlib.pyplot as plt
 import multiprocessing as mp
 import copy
 
-# from sklearn import 
-
 # -----------------------------------------------------------------------------
 # Debugging-Settings
 

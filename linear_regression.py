@@ -32,6 +32,7 @@ import os
 # import copy
 import generate_trajectory as gt
 
+from sklearn.linear_model import LinearRegression as lr
 
 # -----------------------------------------------------------------------------
 # Debugging-Settings
@@ -60,9 +61,9 @@ def import_trajectory(filename):
     return(lines)
 
 
-def trajectory_to_lines(trajectory):
+def linear_regression(trajectory):
     """
-    This function converts a 2D trajectory of points into line-segments
+    This function applies the linear regression machine learning to the noise of the synthetic measurements.
 
     Args:
         trajectory ([[float, float]]): Trajectory consisting of points
@@ -103,7 +104,7 @@ if __name__ == '__main__':
     for dataset_index, dataset in enumerate(datasets):
         dataset_length = dataset_lengths[dataset_index]
         for trajectory_index in range(dataset_length):
-            trajectory = import_trajectory(f'{dataset}_{trajectory_index+1:05d}.csv')
+            trajectory = import_trajectory(f'{dataset}_noised_{trajectory_index+1:05d}.csv')
             
             # Generating sensor-noise parameters
             rotation_drift = np.random.normal(0, 0.5/200*m.pi)  # One-sided drift at each step
