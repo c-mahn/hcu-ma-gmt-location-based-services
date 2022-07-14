@@ -31,12 +31,12 @@ import matplotlib.pyplot as plt
 import multiprocessing as mp
 import copy
 
+# from sklearn import 
 
 # -----------------------------------------------------------------------------
 # Debugging-Settings
 
 verbose = True  # Shows more debugging information
-
 
 # Functions
 # -----------------------------------------------------------------------------
@@ -59,7 +59,6 @@ def geradenschnitt(punkt1, punkt2, punkt3, punkt4):
     punkt5 = {"y": ys, "x": xs}
     return(punkt5)
 
-
 def import_lines(filename):
     if(verbose):
         print(f'[Info] Importing file "{filename}"', end="\r")
@@ -72,7 +71,6 @@ def import_lines(filename):
         print(f'[Info] Imported file "{filename}" successfully')
     return(lines)
 
-
 def plot_line_segments(line_segments, title):
     for i in line_segments:
         plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()])
@@ -82,7 +80,6 @@ def plot_line_segments(line_segments, title):
     plt.ylabel("X")
     plt.title(title)
     plt.show()
-
 
 def plot_results(datasets, title_label, x_label, y_label, data_label, timestamps=None):
     """
@@ -112,7 +109,6 @@ def plot_results(datasets, title_label, x_label, y_label, data_label, timestamps
     plt.title(title_label)
     plt.show()
 
-
 def plot_geometry(geometry1, title):
     for i in geometry1:
         plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()], color='blue')
@@ -121,7 +117,6 @@ def plot_geometry(geometry1, title):
     plt.ylabel("X")
     plt.title(title)
     plt.show()
-
 
 def plot_two_geometries(geometry1, geometry2, title):
     for i in geometry1:
@@ -133,7 +128,6 @@ def plot_two_geometries(geometry1, geometry2, title):
     plt.ylabel("X")
     plt.title(title)
     plt.show()
-
 
 def plot_three_geometries(geometry1, geometry2, geometry3, title):
     for i in geometry1:
@@ -148,7 +142,6 @@ def plot_three_geometries(geometry1, geometry2, geometry3, title):
     plt.title(title)
     plt.show()
 
-
 def line_segments_to_points(line_segments):
     points = {"x": [], "y": []}
     points["x"].append(line_segments[0].x1())
@@ -158,11 +151,9 @@ def line_segments_to_points(line_segments):
         points["y"].append(line.y2())
     return(points)
 
-
 def generate_trajectory(trajectory):
     trajectory.generate()
     return(trajectory.get())
-
 
 def create_multiple_trajectories(trajectory, ammount):
     """
@@ -182,7 +173,7 @@ def create_multiple_trajectories(trajectory, ammount):
     if(verbose):
         print("")
 
-    # Processing the gerneration and retrieval of trajectories in parallel
+    # Processing the generation and retrieval of trajectories in parallel
     if(verbose):
         print(f'[INFO][2/2] Generating {ammount} trajectories')
         if(ammount >= 50):
@@ -194,7 +185,6 @@ def create_multiple_trajectories(trajectory, ammount):
     # if(verbose):
     #     print("")
     return(trajectories)
-
 
 def write_trajectory(points, filename):
     """
@@ -208,7 +198,6 @@ def write_trajectory(points, filename):
         for i, x in enumerate(points["x"]):
             f.write(f'{x}; {points["y"][i]}\n')
     return(None)
-
 
 # Classes
 # -----------------------------------------------------------------------------
@@ -420,7 +409,6 @@ class Trajectory():
     def get_garbage(self):
         return(self.__not_trajectory)
 
-
 class Line():
     def __init__(self, x1, y1, x2, y2):
         self.__x1 = float(x1)
@@ -455,7 +443,6 @@ class Line():
     def delta_x(self):
         return(self.__x2-self.__x1)
 
-
 # Beginning of the Programm
 # -----------------------------------------------------------------------------
 
@@ -471,7 +458,7 @@ if __name__ == '__main__':
         # plot_geometry(lines, "Floorplan")
         trajectory.set_start_coordinate(start_positions[index]["x"], start_positions[index]["y"])
         trajectory.set_start_direction(80/180*m.pi)
-        trajectories = create_multiple_trajectories(trajectory, 100)
+        trajectories = create_multiple_trajectories(trajectory, 4)
         # plot_line_segments(trajectory.get(), "Trajectory")
         for i, current_trajectory in enumerate(trajectories):
             points = line_segments_to_points(current_trajectory)
