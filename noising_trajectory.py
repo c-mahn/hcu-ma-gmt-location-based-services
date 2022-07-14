@@ -132,22 +132,20 @@ def rotate_trajectory(trajectory, mean, stdev):
         current_rotation = np.random.normal(mean, stdev)
         trajectory_new.append(gt.Line(current_line.x1(),
                                       current_line.y1(),
-                                      m.cos(current_line.direction()+current_rotation)*current_line.length(),
-                                      m.sin(current_line.direction()+current_rotation)*current_line.length()))
+                                      current_line.x1()+(m.cos(current_line.direction()+current_rotation)*current_line.length()),
+                                      current_line.y1()+(m.sin(current_line.direction()+current_rotation)*current_line.length())))
+        delta_x = (current_line.x1()+(m.cos(current_line.direction()+current_rotation)*current_line.length()))-current_line.x2()
+        delta_y = (current_line.y1()+(m.sin(current_line.direction()+current_rotation)*current_line.length()))-current_line.y2()
 
         # Scaling the rest of the lines attached to the current line
         if(trajectory != []):
             for index, line in enumerate(trajectory):
-                if(index==0):
-                    trajectory[index] = gt.Line(trajectory_new[-1].x2(),
-                                                trajectory_new[-1].y2(),
-                                                trajectory_new[-1].x2()+m.cos(line.direction()+current_rotation)*line.length(),
-                                                trajectory_new[-1].y2()+m.sin(line.direction()+current_rotation)*line.length())
-                else:
-                    trajectory[index] = gt.Line(trajectory[index-1].x2(),
-                                                trajectory[index-1].y2(),
-                                                trajectory[index-1].x2()+m.cos(line.direction()+current_rotation)*line.length(),
-                                                trajectory[index-1].y2()+m.sin(line.direction()+current_rotation)*line.length())
+                trajectory[index] = gt.Line(line.x1()+delta_x,
+                                            line.y1()+delta_y,
+                                            line.x1()+delta_x+m.cos(line.direction()+current_rotation)*line.length(),
+                                            line.y1()+delta_y+m.sin(line.direction()+current_rotation)*line.length())
+                delta_x = (line.x1()+delta_x+m.cos(line.direction()+current_rotation)*line.length())-line.x2()
+                delta_y = (line.y1()+delta_y+m.sin(line.direction()+current_rotation)*line.length())-line.y2()
     return(trajectory_new)
 
 
@@ -180,5 +178,5 @@ if __name__ == '__main__':
                 print(f'[INFO][CONFIG] Rotation: {rotation_drift:.5f} ± {rotation_noise:.5f} rad, Scale: {step_length_scale:.5f} ± {step_length_noise:.5f} x')
             
             trajectory = scale_trajectory(trajectory, step_length_scale, step_length_noise)
-            # trajectory = rotate_trajectory(trajectory, rotation_drift, rotation_noise)
+            trajectory = rotate_trajectory(trajectory, rotation_drift, rotation_noise)
             gt.write_trajectory(trajectory, f'{dataset}_noised_{trajectory_index+1:05d}.csv')
