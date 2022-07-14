@@ -32,6 +32,7 @@ import os
 # import copy
 import generate_trajectory as gt
 
+from sklearn.linear_model import LinearRegression as lr
 
 # -----------------------------------------------------------------------------
 # Debugging-Settings
@@ -42,7 +43,7 @@ verbose = True  # Shows more debugging information
 # Functions
 # -----------------------------------------------------------------------------
 
-def import_trajectory(filename):
+def import_noised_trajectory(filename):
     """
     This function imports simple trajectories, that are represented as a list
     of Line-objects.
@@ -54,36 +55,44 @@ def import_trajectory(filename):
         print(f'[Info] Importing file "{filename}"')
     with open(os.path.join("data", filename)) as file:
         data = np.loadtxt(file, delimiter=";")
-    lines = []
+    trajectory = []
     for i in data:
-        lines.append(gt.Line(i[1], i[2], i[3], i[4]))
-    return(lines)
+        trajectory.append(i[0], gt.Line(i[1], i[2], i[3], i[4]), i[5], i[6], i[7], i[8], i[9])
+    return(trajectory)
 
-
-def trajectory_to_lines(trajectory):
+def import_raw_trajectory(filename):
     """
-    This function converts a 2D trajectory of points into line-segments
+    This function imports simple trajectories, that are represented as a list
+    of Line-objects.
+
+    Args:
+        filename ("str"): name of the file, where the trajectory is saved in
+    """
+    if(verbose):
+        print(f'[Info] Importing file "{filename}"')
+    with open(os.path.join("data", filename)) as file:
+        data = np.loadtxt(file, delimiter=";")
+    trajectory = []
+    for i in data:
+        trajectory.append(i[0], gt.Line(i[1], i[2], i[3], i[4]), i[5], i[6], i[7], i[8], i[9])
+    return(trajectory)
+
+def linear_regression(trajectory):
+    """
+    This function applies the linear regression machine learning to the noise of the synthetic measurements.
 
     Args:
         trajectory ([[float, float]]): Trajectory consisting of points
                                        represented as list-entries with two
                                        float-values inside
     """
-    previous_point = trajectory.pop()
-    lines = []
     for i, point in enumerate(trajectory):
         if(verbose):
-            print(f'[INFO][{i+1}/{len(trajectory)}] Converting trajectory to line-segments', end="\r")
-        lines.append(gt.Line(previous_point[0], previous_point[1], point[0], point[1]))
-        previous_point = point
+            print(f'[INFO][{i+1}/{len(trajectory)}] Applying linear regression to the noise of the trajectory', end="\r")
+        
     if(verbose):
         print("")
-    return(lines)
-
-
-def scale_trajectory(trajectory, mean, stdev):
-    pass
-
+    return()
 
 # Classes
 # -----------------------------------------------------------------------------
@@ -103,12 +112,5 @@ if __name__ == '__main__':
     for dataset_index, dataset in enumerate(datasets):
         dataset_length = dataset_lengths[dataset_index]
         for trajectory_index in range(dataset_length):
-            trajectory = import_trajectory(f'{dataset}_{trajectory_index+1:05d}.csv')
-            
-            # Generating sensor-noise parameters
-            rotation_drift = np.random.normal(0, 0.5/200*m.pi)  # One-sided drift at each step
-            rotation_noise = abs(np.random.normal(0, 0.2/200*m.pi))  # Rotation angle noise
-            step_length_scale = np.random.normal(1, 0.1)  # Scale of each step
-            step_length_noise = abs(np.random.normal(0, 0.025))  # Random scale of each step
-            if(verbose):
-                print(f'[INFO][CONFIG] Rotation: {rotation_drift:.5f} ± {rotation_noise:.5f} rad, Scale: {step_length_scale:.5f} ± {step_length_noise:.5f} x')
+            trajectory = import_noised_trajectory(f'{dataset}_noised_{trajectory_index+1:05d}.csv')
+            trajectory = import_raw_trajectory(f'{dataset}_{trajectory_index+1:05d}.csv')
