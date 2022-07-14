@@ -60,14 +60,14 @@ def geradenschnitt(punkt1, punkt2, punkt3, punkt4):
 
 def import_lines(filename):
     if(verbose):
-        print(f'[Info] Importing file "{filename}"', end="\r")
+        print(f'[INFO] Importing file "{filename}"', end="\r")
     with open(os.path.join("data", filename)) as file:
         data = np.loadtxt(file, delimiter=";")
     lines = []
     for entry in data:
         lines.append(Line(entry[0], entry[1], entry[2], entry[3]))
     if(verbose):
-        print(f'[Info] Imported file "{filename}" successfully')
+        print(f'[INFO] Imported file "{filename}" successfully')
     return(lines)
 
 
@@ -483,7 +483,7 @@ class Line():
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    filenames = ["EG_polygon_semantic_edited_converted.csv", "1OG_polygon_semantic_edited_converted.csv", "4OG_polygon_semantic_edited_converted.csv"]
+    filenames = ["floor_EG_lines.csv", "floor_1OG_lines.csv", "floor_4OG_lines.csv"]
     start_positions = [{"x": 5932827, "y": 566527},
                        {"x": 5932836, "y": 566560},
                        {"x": 5932823, "y": 566526}]

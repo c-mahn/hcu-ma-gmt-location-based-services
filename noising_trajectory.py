@@ -51,7 +51,7 @@ def import_trajectory(filename):
         filename ("str"): name of the file, where the trajectory is saved in
     """
     if(verbose):
-        print(f'[Info] Importing file "{filename}"')
+        print(f'[INFO] Importing file "{filename}"')
     with open(os.path.join("data", filename)) as file:
         data = np.loadtxt(file, delimiter=";")
     lines = []
@@ -149,6 +149,24 @@ def rotate_trajectory(trajectory, mean, stdev):
     return(trajectory_new)
 
 
+def write_noise_information(smean, sstd, rmean, rstd, trajectory_describtion):
+    """
+    This function takes a list of points and writes them to a text-file.
+
+    Args:
+        points ({"x": [float], "y": [float]}): A list of points formated in a dictionary
+        filename (str): the filename where the points are written to
+    """
+    if(verbose):
+        print(f'[INFO] Writing noise-information to "{trajectory_describtion}_noise-information.log"')
+    with open(os.path.join("data", f'{trajectory_describtion}_noise-information.log'), "w") as f:
+        f.write(f'distance; mean; {smean}\n')
+        f.write(f'distance; sdev; {sstd}\n')
+        f.write(f'rotation; mean; {rmean}\n')
+        f.write(f'rotation; sdev; {rstd}\n')
+    return(None)
+
+
 # Classes
 # -----------------------------------------------------------------------------
 
@@ -158,11 +176,11 @@ def rotate_trajectory(trajectory, mean, stdev):
 
 if __name__ == '__main__':
     # Dataset-Information
-    datasets = ["trajectory_EG_polygon_semantic_edited_converted",
-                "trajectory_1OG_polygon_semantic_edited_converted",
-                "trajectory_4OG_polygon_semantic_edited_converted"]
+    datasets = ["trajectory_floor_EG_lines",
+                "trajectory_floor_1OG_lines",
+                "trajectory_floor_4OG_lines"]
     dataset_lengths = [10, 10, 10]
-    training_data_length = 50  # Number of noised trajectories to generate for training
+    training_data_length = 10  # Number of noised trajectories to generate for training
     
     # Import of individual trajectories
     for dataset_index, dataset in enumerate(datasets):
@@ -177,6 +195,7 @@ if __name__ == '__main__':
             step_length_noise = abs(np.random.normal(0, 0.025))  # Random scale of each step
             if(verbose):
                 print(f'[INFO][CONFIG] Rotation: {rotation_drift:.5f} ± {rotation_noise:.5f} rad, Scale: {step_length_scale:.5f} ± {step_length_noise:.5f} x')
+            write_noise_information(step_length_scale, step_length_noise, rotation_drift, rotation_noise, f'{dataset}_{trajectory_index+1:05d}')
 
             for noise_index in range(training_data_length):
                 noised_trajectory = scale_trajectory(trajectory.copy(), step_length_scale, step_length_noise)
