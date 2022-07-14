@@ -94,12 +94,15 @@ def scale_trajectory(trajectory, mean, stdev):
         print(f'[INFO] Scaling trajectory')
     trajectory_new = []
     while(trajectory != []):
+        # Selecting and scaling one line at a time
         current_line = trajectory.pop(0)
         current_scale = np.random.normal(mean, stdev)
         trajectory_new.append(gt.Line(current_line.x1(),
                                       current_line.y1(),
                                       current_line.x1() + (current_line.delta_x()*current_scale),
                                       current_line.y1() + (current_line.delta_y()*current_scale)))
+
+        # Scaling the rest of the lines attached to the current line
         if(trajectory != []):
             for index, line in enumerate(trajectory):
                 trajectory[index] = gt.Line((current_line.x1()-line.x1())*current_scale+current_line.x1(),
@@ -110,7 +113,40 @@ def scale_trajectory(trajectory, mean, stdev):
 
 
 def rotate_trajectory(trajectory, mean, stdev):
-    pass
+    """
+    This function rotates a trajectory with a mean and standard deviation.
+
+    Args:
+        trajectory ([Line]): The trajectory consisting of Line-objects in a list.
+        mean (float): The mean rotation factor for each step.
+        stdev (float): the standard deviation for the rotation factor of each step.
+    """
+    if(verbose):
+        print(f'[INFO] Rotating trajectory')
+    trajectory_new = []
+    while(trajectory != []):
+        # Selecting and rotating one line at a time
+        current_line = trajectory.pop(0)
+        current_rotation = np.random.normal(mean, stdev)
+        trajectory_new.append(gt.Line(current_line.x1(),
+                                      current_line.y1(),
+                                      m.cos(current_line.direction()+current_rotation)*current_line.length(),
+                                      m.sin(current_line.direction()+current_rotation)*current_line.length()))
+
+        # Scaling the rest of the lines attached to the current line
+        if(trajectory != []):
+            for index, line in enumerate(trajectory):
+                if(index==0):
+                    trajectory[index] = gt.Line(trajectory_new[-1].x2(),
+                                                trajectory_new[-1].y2(),
+                                                trajectory_new[-1].x2()+m.cos(line.direction()+current_rotation)*line.length(),
+                                                trajectory_new[-1].y2()+m.sin(line.direction()+current_rotation)*line.length())
+                else:
+                    trajectory[index] = gt.Line(trajectory[index-1].x2(),
+                                                trajectory[index-1].y2(),
+                                                trajectory[index-1].x2()+m.cos(line.direction()+current_rotation)*line.length(),
+                                                trajectory[index-1].y2()+m.sin(line.direction()+current_rotation)*line.length())
+    return(trajectory_new)
 
 
 # Classes
@@ -142,4 +178,5 @@ if __name__ == '__main__':
                 print(f'[INFO][CONFIG] Rotation: {rotation_drift:.5f} ± {rotation_noise:.5f} rad, Scale: {step_length_scale:.5f} ± {step_length_noise:.5f} x')
             
             trajectory = scale_trajectory(trajectory, step_length_scale, step_length_noise)
+            trajectory = rotate_trajectory(trajectory, rotation_drift, rotation_noise)
             gt.write_trajectory(trajectory, f'{dataset}_noised_{trajectory_index+1:05d}.csv')
