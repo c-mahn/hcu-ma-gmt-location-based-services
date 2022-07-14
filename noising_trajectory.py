@@ -162,6 +162,7 @@ if __name__ == '__main__':
                 "trajectory_1OG_polygon_semantic_edited_converted",
                 "trajectory_4OG_polygon_semantic_edited_converted"]
     dataset_lengths = [10, 10, 10]
+    training_data_length = 50  # Number of noised trajectories to generate for training
     
     # Import of individual trajectories
     for dataset_index, dataset in enumerate(datasets):
@@ -176,7 +177,9 @@ if __name__ == '__main__':
             step_length_noise = abs(np.random.normal(0, 0.025))  # Random scale of each step
             if(verbose):
                 print(f'[INFO][CONFIG] Rotation: {rotation_drift:.5f} ± {rotation_noise:.5f} rad, Scale: {step_length_scale:.5f} ± {step_length_noise:.5f} x')
-            
-            trajectory = scale_trajectory(trajectory, step_length_scale, step_length_noise)
-            trajectory = rotate_trajectory(trajectory, rotation_drift, rotation_noise)
-            gt.write_trajectory(trajectory, f'{dataset}_noised_{trajectory_index+1:05d}.csv')
+
+            for noise_index in range(training_data_length):
+                noised_trajectory = scale_trajectory(trajectory.copy(), step_length_scale, step_length_noise)
+                noised_trajectory = rotate_trajectory(noised_trajectory, rotation_drift, rotation_noise)
+                gt.write_trajectory(noised_trajectory, f'{dataset}_{trajectory_index+1:05d}_noised_{noise_index+1:05d}.csv')
+                del noised_trajectory
