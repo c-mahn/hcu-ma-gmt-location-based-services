@@ -101,14 +101,16 @@ def scale_trajectory(trajectory, mean, stdev):
                                       current_line.y1(),
                                       current_line.x1() + (current_line.delta_x()*current_scale),
                                       current_line.y1() + (current_line.delta_y()*current_scale)))
+        delta_x = (current_line.x1() + (current_line.delta_x()*current_scale)) - current_line.x2()
+        delta_y = (current_line.y1() + (current_line.delta_y()*current_scale)) - current_line.y2()
 
         # Scaling the rest of the lines attached to the current line
         if(trajectory != []):
             for index, line in enumerate(trajectory):
-                trajectory[index] = gt.Line((current_line.x1()-line.x1())*current_scale+current_line.x1(),
-                                            (current_line.y1()-line.y1())*current_scale+current_line.y1(),
-                                            (current_line.x1()-line.x2())*current_scale+current_line.x1(),
-                                            (current_line.y1()-line.y2())*current_scale+current_line.y1())
+                trajectory[index] = gt.Line(line.x1()+delta_x,
+                                            line.y1()+delta_y,
+                                            line.x2()+delta_x,
+                                            line.y2()+delta_y)
     return(trajectory_new)
 
 
