@@ -31,6 +31,7 @@ import os
 # import multiprocessing as mp
 # import copy
 import generate_trajectory as gt
+import noising_trajectory as nt
 
 from sklearn.linear_model import LinearRegression as lr
 
@@ -43,41 +44,8 @@ verbose = True  # Shows more debugging information
 # Functions
 # -----------------------------------------------------------------------------
 
-def import_noised_trajectory(filename):
-    """
-    This function imports simple trajectories, that are represented as a list
-    of Line-objects.
 
-    Args:
-        filename ("str"): name of the file, where the trajectory is saved in
-    """
-    if(verbose):
-        print(f'[Info] Importing file "{filename}"')
-    with open(os.path.join("data", filename)) as file:
-        data = np.loadtxt(file, delimiter=";")
-    trajectory = []
-    for i in data:
-        trajectory.append(i[0], gt.Line(i[1], i[2], i[3], i[4]), i[5], i[6], i[7], i[8], i[9])
-    return(trajectory)
-
-def import_raw_trajectory(filename):
-    """
-    This function imports simple trajectories, that are represented as a list
-    of Line-objects.
-
-    Args:
-        filename ("str"): name of the file, where the trajectory is saved in
-    """
-    if(verbose):
-        print(f'[Info] Importing file "{filename}"')
-    with open(os.path.join("data", filename)) as file:
-        data = np.loadtxt(file, delimiter=";")
-    trajectory = []
-    for i in data:
-        trajectory.append(i[0], gt.Line(i[1], i[2], i[3], i[4]), i[5], i[6], i[7], i[8], i[9])
-    return(trajectory)
-
-def linear_regression(trajectory):
+def linear_regression(trajectory_measured, trajectory_groundtruth):
     """
     This function applies the linear regression machine learning to the noise of the synthetic measurements.
 
@@ -112,5 +80,5 @@ if __name__ == '__main__':
     for dataset_index, dataset in enumerate(datasets):
         dataset_length = dataset_lengths[dataset_index]
         for trajectory_index in range(dataset_length):
-            trajectory = import_noised_trajectory(f'{dataset}_noised_{trajectory_index+1:05d}.csv')
-            trajectory = import_raw_trajectory(f'{dataset}_{trajectory_index+1:05d}.csv')
+            trajectory_measured = nt.import_trajectory(f'{dataset}_noised_{trajectory_index+1:05d}.csv')
+            trajectory_ground_truth = nt.import_trajectory(f'{dataset}_{trajectory_index+1:05d}.csv')

@@ -60,3 +60,4 @@ if __name__ == '__main__':
     run_script("prepare_data.py")
     run_script("generate_trajectory.py")
     run_script("noising_trajectory.py")
+    run_script("linear_regression.py")

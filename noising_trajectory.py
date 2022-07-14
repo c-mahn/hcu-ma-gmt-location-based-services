@@ -178,5 +178,5 @@ if __name__ == '__main__':
                 print(f'[INFO][CONFIG] Rotation: {rotation_drift:.5f} ± {rotation_noise:.5f} rad, Scale: {step_length_scale:.5f} ± {step_length_noise:.5f} x')
             
             trajectory = scale_trajectory(trajectory, step_length_scale, step_length_noise)
-            trajectory = rotate_trajectory(trajectory, rotation_drift, rotation_noise)
+            # trajectory = rotate_trajectory(trajectory, rotation_drift, rotation_noise)
             gt.write_trajectory(trajectory, f'{dataset}_noised_{trajectory_index+1:05d}.csv')
