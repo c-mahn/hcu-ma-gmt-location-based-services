@@ -82,7 +82,7 @@ def trajectory_to_lines(trajectory):
 
 
 def scale_trajectory(trajectory, mean, stdev):
-    
+    pass
 
 
 # Classes
