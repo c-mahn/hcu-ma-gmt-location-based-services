@@ -44,23 +44,20 @@ verbose = True  # Shows more debugging information
 # Functions
 # -----------------------------------------------------------------------------
 
-
-def linear_regression(trajectory_measured, trajectory_groundtruth):
+def write_text(filename, text):
     """
-    This function applies the linear regression machine learning to the noise of the synthetic measurements.
+    This function writes text to a file.
 
     Args:
-        trajectory ([[float, float]]): Trajectory consisting of points
-                                       represented as list-entries with two
-                                       float-values inside
+        filename (str): Name of the file
+        text (str): Future content of the file.
     """
-    for i, point in enumerate(trajectory):
-        if(verbose):
-            print(f'[INFO][{i+1}/{len(trajectory)}] Applying linear regression to the noise of the trajectory', end="\r")
-        
     if(verbose):
-        print("")
-    return()
+        print(f'[INFO] Writing text to "{filename}"')
+    with open(os.path.join("data", filename), "w") as f:
+        f.write(f'{text}')
+    return(None)
+
 
 # Classes
 # -----------------------------------------------------------------------------
@@ -112,5 +109,6 @@ if __name__ == '__main__':
             data_groundtruth = np.array(data_groundtruth)
             data_measured = np.array(data_measured)
             
-            mlpc = MLPRegressor(hidden_layer_sizes=(5, 5), solver='lbfgs', max_iter=10000)
-            mlpc.fit(data_measured, data_groundtruth)
+            mlpr = MLPRegressor(hidden_layer_sizes=(5, 5), solver='adam', max_iter=50000, verbose=True)
+            mlpr.fit(data_measured, data_groundtruth)
+            write_text(f'{dataset}_{trajectory_index+1:05d}_ml-model.txt', mlpr.coefs_)
