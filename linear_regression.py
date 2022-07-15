@@ -84,21 +84,17 @@ if __name__ == '__main__':
             for trainingset_index in range(trainingset_length):
                 trajectories_measured.append(nt.import_trajectory(f'{dataset}_{trajectory_index+1:05d}_noised_{trainingset_index+1:05d}.csv'))
 
-            # Preparing training
+            # Preparing training-data
             data_groundtruth = []
             data_measured = []
-            for trainingset_index in range(trainingset_length):
+            for trainingset_index in range(trainingset_length-1):
                 for measurement_index, gt_line in enumerate(trajectory_ground_truth):
-                    data_groundtruth.append([measurement_index,
-                                             gt_line.x1(),
+                    data_groundtruth.append([gt_line.x1(),
                                              gt_line.y1(),
                                              gt_line.x2(),
-                                             gt_line.y2(),
-                                             gt_line.delta_x(),
-                                             gt_line.delta_y(),
-                                             gt_line.direction(),
-                                             gt_line.length()])
-                    data_measured.append([trajectories_measured[trainingset_index][measurement_index].x1(),
+                                             gt_line.y2()])
+                    data_measured.append([measurement_index,
+                                          trajectories_measured[trainingset_index][measurement_index].x1(),
                                           trajectories_measured[trainingset_index][measurement_index].y1(),
                                           trajectories_measured[trainingset_index][measurement_index].x2(),
                                           trajectories_measured[trainingset_index][measurement_index].y2(),
@@ -109,6 +105,30 @@ if __name__ == '__main__':
             data_groundtruth = np.array(data_groundtruth)
             data_measured = np.array(data_measured)
             
-            mlpr = MLPRegressor(hidden_layer_sizes=(5, 5), solver='adam', max_iter=50000, verbose=True)
+            # Training ML
+            mlpr = MLPRegressor(hidden_layer_sizes=(5, 5), solver='adam', max_iter=50000, verbose=True, random_state=1, learning_rate="adaptive", tol=1e-6)
             mlpr.fit(data_measured, data_groundtruth)
             write_text(f'{dataset}_{trajectory_index+1:05d}_ml-model.txt', mlpr.coefs_)
+
+            # Preparing validation-data
+            validation_data = []
+            for measurement_index, line in enumerate(trajectories_measured[-1]):
+                validation_data.append([measurement_index,
+                                        line.x1(),
+                                        line.y1(),
+                                        line.x2(),
+                                        line.y2(),
+                                        line.delta_x(),
+                                        line.delta_y(),
+                                        line.direction(),
+                                        line.length()])
+            validation_data = np.array(validation_data)
+            
+            # Validating ML
+            ml_prediction = mlpr.predict(validation_data)
+            
+            # Export Prediction
+            predicted_trajectory = []
+            for i, e in enumerate(ml_prediction):
+                predicted_trajectory.append(gt.Line(e[0], e[1], e[2], e[3]))
+            gt.write_trajectory(predicted_trajectory, f'{dataset}_{trajectory_index+1:05d}_ml-prediction.txt')
