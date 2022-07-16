@@ -30,7 +30,7 @@ import os
 # from scipy import signal
 # import multiprocessing as mp
 # import copy
-import generate_trajectory as gt
+import lib_trajectory as t
 
 
 # -----------------------------------------------------------------------------
@@ -41,44 +41,6 @@ verbose = True  # Shows more debugging information
 
 # Functions
 # -----------------------------------------------------------------------------
-
-def import_trajectory(filename):
-    """
-    This function imports simple trajectories, that are represented as a list
-    of Line-objects.
-
-    Args:
-        filename ("str"): name of the file, where the trajectory is saved in
-    """
-    if(verbose):
-        print(f'[INFO] Importing file "{filename}"')
-    with open(os.path.join("data", filename)) as file:
-        data = np.loadtxt(file, delimiter=";")
-    lines = []
-    for i in data:
-        lines.append(gt.Line(i[1], i[2], i[3], i[4]))
-    return(lines)
-
-
-def trajectory_to_lines(trajectory):
-    """
-    This function converts a 2D trajectory of points into line-segments
-
-    Args:
-        trajectory ([[float, float]]): Trajectory consisting of points
-                                       represented as list-entries with two
-                                       float-values inside
-    """
-    previous_point = trajectory.pop()
-    lines = []
-    for i, point in enumerate(trajectory):
-        if(verbose):
-            print(f'[INFO][{i+1}/{len(trajectory)}] Converting trajectory to line-segments', end="\r")
-        lines.append(gt.Line(previous_point[0], previous_point[1], point[0], point[1]))
-        previous_point = point
-    if(verbose):
-        print("")
-    return(lines)
 
 
 def scale_trajectory(trajectory, mean, stdev):
@@ -97,20 +59,20 @@ def scale_trajectory(trajectory, mean, stdev):
         # Selecting and scaling one line at a time
         current_line = trajectory.pop(0)
         current_scale = np.random.normal(mean, stdev)
-        trajectory_new.append(gt.Line(current_line.x1(),
-                                      current_line.y1(),
-                                      current_line.x1() + (current_line.delta_x()*current_scale),
-                                      current_line.y1() + (current_line.delta_y()*current_scale)))
+        trajectory_new.append(t.Line(current_line.x1(),
+                                     current_line.y1(),
+                                     current_line.x1() + (current_line.delta_x()*current_scale),
+                                     current_line.y1() + (current_line.delta_y()*current_scale)))
         delta_x = (current_line.x1() + (current_line.delta_x()*current_scale)) - current_line.x2()
         delta_y = (current_line.y1() + (current_line.delta_y()*current_scale)) - current_line.y2()
 
         # Scaling the rest of the lines attached to the current line
         if(trajectory != []):
             for index, line in enumerate(trajectory):
-                trajectory[index] = gt.Line(line.x1()+delta_x,
-                                            line.y1()+delta_y,
-                                            line.x2()+delta_x,
-                                            line.y2()+delta_y)
+                trajectory[index] = t.Line(line.x1()+delta_x,
+                                           line.y1()+delta_y,
+                                           line.x2()+delta_x,
+                                           line.y2()+delta_y)
     return(trajectory_new)
 
 
@@ -130,20 +92,20 @@ def rotate_trajectory(trajectory, mean, stdev):
         # Selecting and rotating one line at a time
         current_line = trajectory.pop(0)
         current_rotation = np.random.normal(mean, stdev)
-        trajectory_new.append(gt.Line(current_line.x1(),
-                                      current_line.y1(),
-                                      current_line.x1()+(m.cos(current_line.direction()+current_rotation)*current_line.length()),
-                                      current_line.y1()+(m.sin(current_line.direction()+current_rotation)*current_line.length())))
+        trajectory_new.append(t.Line(current_line.x1(),
+                                     current_line.y1(),
+                                     current_line.x1()+(m.cos(current_line.direction()+current_rotation)*current_line.length()),
+                                     current_line.y1()+(m.sin(current_line.direction()+current_rotation)*current_line.length())))
         delta_x = trajectory_new[-1].x2()-current_line.x2()
         delta_y = trajectory_new[-1].y2()-current_line.y2()
 
         # Scaling the rest of the lines attached to the current line
         if(trajectory != []):
             for index, line in enumerate(trajectory):
-                trajectory[index] = gt.Line(line.x1()+delta_x,
-                                            line.y1()+delta_y,
-                                            line.x1()+delta_x+m.cos(line.direction()+current_rotation)*line.length(),
-                                            line.y1()+delta_y+m.sin(line.direction()+current_rotation)*line.length())
+                trajectory[index] = t.Line(line.x1()+delta_x,
+                                           line.y1()+delta_y,
+                                           line.x1()+delta_x+m.cos(line.direction()+current_rotation)*line.length(),
+                                           line.y1()+delta_y+m.sin(line.direction()+current_rotation)*line.length())
                 delta_x = (line.x1()+delta_x+m.cos(line.direction()+current_rotation)*line.length())-line.x2()
                 delta_y = (line.y1()+delta_y+m.sin(line.direction()+current_rotation)*line.length())-line.y2()
     return(trajectory_new)
@@ -186,7 +148,7 @@ if __name__ == '__main__':
     for dataset_index, dataset in enumerate(datasets):
         dataset_length = dataset_lengths[dataset_index]
         for trajectory_index in range(dataset_length):
-            trajectory = import_trajectory(f'{dataset}_{trajectory_index+1:05d}.csv')
+            trajectory = t.lines_import(f'{dataset}_{trajectory_index+1:05d}.csv')
             
             # Generating sensor-noise parameters
             rotation_drift = np.random.normal(0, 0.1/200*m.pi)  # One-sided drift at each step
@@ -200,5 +162,5 @@ if __name__ == '__main__':
             for noise_index in range(training_data_length):
                 noised_trajectory = scale_trajectory(trajectory.copy(), step_length_scale, step_length_noise)
                 noised_trajectory = rotate_trajectory(noised_trajectory, rotation_drift, rotation_noise)
-                gt.write_trajectory(noised_trajectory, f'{dataset}_{trajectory_index+1:05d}_noised_{noise_index+1:05d}.csv')
+                t.lines_export(noised_trajectory, f'{dataset}_{trajectory_index+1:05d}_noised_{noise_index+1:05d}.csv')
                 del noised_trajectory

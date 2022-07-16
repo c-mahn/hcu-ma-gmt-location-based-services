@@ -30,8 +30,7 @@ import os
 # from scipy import signal
 # import multiprocessing as mp
 # import copy
-import generate_trajectory as gt
-import noising_trajectory as nt
+import lib_trajectory as t
 from sklearn.neural_network import MLPRegressor
 
 
@@ -77,12 +76,12 @@ if __name__ == '__main__':
     # Import of individual trajectories
     for dataset_index, dataset in enumerate(datasets):
         for trajectory_index in range(dataset_length):
-            trajectory_ground_truth = nt.import_trajectory(f'{dataset}_{trajectory_index+1:05d}.csv')  # Ground truth data for training
+            trajectory_ground_truth = t.lines_import(f'{dataset}_{trajectory_index+1:05d}.csv')  # Ground truth data for training
 
             # Importing Training-datasets
             trajectories_measured = []
             for trainingset_index in range(trainingset_length):
-                trajectories_measured.append(nt.import_trajectory(f'{dataset}_{trajectory_index+1:05d}_noised_{trainingset_index+1:05d}.csv'))
+                trajectories_measured.append(t.lines_import(f'{dataset}_{trajectory_index+1:05d}_noised_{trainingset_index+1:05d}.csv'))
 
             # Preparing training-data
             data_groundtruth = []
@@ -106,7 +105,7 @@ if __name__ == '__main__':
             data_measured = np.array(data_measured)
             
             # Training ML
-            mlpr = MLPRegressor(hidden_layer_sizes=(5, 5), solver='adam', max_iter=50000, verbose=True, random_state=1, learning_rate="adaptive", tol=1e-6)
+            mlpr = MLPRegressor(hidden_layer_sizes=(5, 5), solver='adam', max_iter=50000, verbose=True, random_state=1, learning_rate="adaptive", tol=1e-10)
             mlpr.fit(data_measured, data_groundtruth)
             write_text(f'{dataset}_{trajectory_index+1:05d}_ml-model.txt', mlpr.coefs_)
 
@@ -130,5 +129,5 @@ if __name__ == '__main__':
             # Export Prediction
             predicted_trajectory = []
             for i, e in enumerate(ml_prediction):
-                predicted_trajectory.append(gt.Line(e[0], e[1], e[2], e[3]))
-            gt.write_trajectory(predicted_trajectory, f'{dataset}_{trajectory_index+1:05d}_ml-prediction.txt')
+                predicted_trajectory.append(t.Line(e[0], e[1], e[2], e[3]))
+            t.lines_export(predicted_trajectory, f'{dataset}_{trajectory_index+1:05d}_ml-prediction.txt')

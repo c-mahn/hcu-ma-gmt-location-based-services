@@ -30,6 +30,7 @@ import matplotlib.pyplot as plt
 # from scipy import signal
 import multiprocessing as mp
 import copy
+import lib_trajectory as t
 
 # -----------------------------------------------------------------------------
 # Debugging-Settings
@@ -38,48 +39,6 @@ verbose = True  # Shows more debugging information
 
 # Functions
 # -----------------------------------------------------------------------------
-
-def geradenschnitt(punkt1, punkt2, punkt3, punkt4):
-    """
-    Diese Funktion berechnet einen Geradenschnitt zwischen der Geraden von
-    Punkt 1 zu Punkt 2 und der Geraden von Punkt 3 zu Punkt 4.
-    Die Punkt werden jeweils in folgendem Format übergeben:
-    punkt1 = {"x": FLOAT, "y": FLOAT}
-    punkt2 = {"x": FLOAT, "y": FLOAT}
-    punkt3 = {"x": FLOAT, "y": FLOAT}
-    punkt4 = {"x": FLOAT, "y": FLOAT}
-    """
-    t12 = (punkt2["y"]-punkt1["y"])/(punkt2["x"]-punkt1["x"])
-    t34 = (punkt4["y"]-punkt3["y"])/(punkt4["x"]-punkt3["x"])
-    xs = punkt3["x"]
-    xs += (((punkt3["y"]-punkt1["y"])-(punkt3["x"]-punkt1["x"])*t12)/(t12-t34))
-    ys = punkt1["y"]+(xs-punkt1["x"])*t12
-    punkt5 = {"y": ys, "x": xs}
-    return(punkt5)
-
-
-def import_lines(filename):
-    if(verbose):
-        print(f'[INFO] Importing file "{filename}"', end="\r")
-    with open(os.path.join("data", filename)) as file:
-        data = np.loadtxt(file, delimiter=";")
-    lines = []
-    for entry in data:
-        lines.append(Line(entry[0], entry[1], entry[2], entry[3]))
-    if(verbose):
-        print(f'[INFO] Imported file "{filename}" successfully')
-    return(lines)
-
-
-def plot_line_segments(line_segments, title):
-    for i in line_segments:
-        plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()])
-    # plt.legend(["lines"])
-    plt.grid()
-    plt.xlabel("Y")
-    plt.ylabel("X")
-    plt.title(title)
-    plt.show()
 
 
 def plot_results(datasets, title_label, x_label, y_label, data_label, timestamps=None):
@@ -109,52 +68,6 @@ def plot_results(datasets, title_label, x_label, y_label, data_label, timestamps
     plt.ylabel(y_label)
     plt.title(title_label)
     plt.show()
-
-
-def plot_geometry(geometry1, title):
-    for i in geometry1:
-        plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()], color='blue')
-    plt.grid()
-    plt.xlabel("Y")
-    plt.ylabel("X")
-    plt.title(title)
-    plt.show()
-
-
-def plot_two_geometries(geometry1, geometry2, title):
-    for i in geometry1:
-        plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()], color='blue')
-    for i in geometry2:
-        plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()], color='green')
-    plt.grid()
-    plt.xlabel("Y")
-    plt.ylabel("X")
-    plt.title(title)
-    plt.show()
-
-
-def plot_three_geometries(geometry1, geometry2, geometry3, title):
-    for i in geometry1:
-        plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()], color='blue')
-    for i in geometry2:
-        plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()], color='green')
-    for i in geometry3:
-        plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()], color='red')
-    plt.grid()
-    plt.xlabel("Y")
-    plt.ylabel("X")
-    plt.title(title)
-    plt.show()
-
-
-def line_segments_to_points(line_segments):
-    points = {"x": [], "y": []}
-    points["x"].append(line_segments[0].x1())
-    points["y"].append(line_segments[0].y1())
-    for line in line_segments:
-        points["x"].append(line.x2())
-        points["y"].append(line.y2())
-    return(points)
 
 
 def generate_trajectory(trajectory):
@@ -192,38 +105,6 @@ def create_multiple_trajectories(trajectory, ammount):
     # if(verbose):
     #     print("")
     return(trajectories)
-
-
-def write_trajectory_legacy(points, filename):
-    """
-    This function takes a list of points and writes them to a text-file.
-
-    Args:
-        points ({"x": [float], "y": [float]}): A list of points formated in a dictionary
-        filename (str): the filename where the points are written to
-    """
-    with open(os.path.join("data", filename), "w") as f:
-        for i, x in enumerate(points["x"]):
-            f.write(f'{x}; {points["y"][i]}\n')
-    return(None)
-
-
-def write_trajectory(lines, filename):
-    """
-    This functions takes Line-objects and writes them to a text-file.
-
-    Args:
-        lines ([Line]): A list with Line-objects
-        filename (str): Filename the Lines will be written to
-    """
-    if(verbose):
-        print(f'[INFO] Writing trajectory to "{filename}"')
-    with open(os.path.join("data", filename), "w") as f:
-        for index, line in enumerate(lines):
-            if(index==0):
-                f.write(f'{index}; {line.x1()}; {line.y1()}; {line.x2()}; {line.y2()}; {line.delta_x()}; {line.delta_y()}; {line.direction()}; 0.0; {line.length()}\n')
-            else:
-                f.write(f'{index}; {line.x1()}; {line.y1()}; {line.x2()}; {line.y2()}; {line.delta_x()}; {line.delta_y()}; {line.direction()}; {lines[index-1].direction()-line.direction()}; {line.length()}\n')
 
 
 # Classes
@@ -316,7 +197,7 @@ class Trajectory():
             point3 = {"x": i.x1(), "y": i.y1()}
             point4 = {"x": i.x2(), "y": i.y2()}
             try:
-                intersected_point = geradenschnitt(point1, point2, point3, point4)
+                intersected_point = t.geradenschnitt(point1, point2, point3, point4)
                 if(point1["x"] <= intersected_point["x"] <= point2["x"] and point3["x"] <= intersected_point["x"] <= point4["x"]):
                     intersection = True
                 elif(point1["x"] >= intersected_point["x"] >= point2["x"] and point3["x"] <= intersected_point["x"] <= point4["x"]):
@@ -350,7 +231,7 @@ class Trajectory():
                 position_try = {"x": None, "y": None}
                 position_try["x"] = position["x"] + (m.cos(direction_try) * length_try)
                 position_try["y"] = position["y"] + (m.sin(direction_try) * length_try)
-                line_try = Line(position["x"], position["y"], position_try["x"], position_try["y"])
+                line_try = t.Line(position["x"], position["y"], position_try["x"], position_try["y"])
                 if(self.__check_intersection(line_try)):
                     tries += 1
                 else:
@@ -382,7 +263,7 @@ class Trajectory():
                 position_try = {"x": None, "y": None}
                 position_try["x"] = position[-1]["x"] + (m.cos(direction_try) * length_try)
                 position_try["y"] = position[-1]["y"] + (m.sin(direction_try) * length_try)
-                line_try = Line(position[-1]["x"], position[-1]["y"], position_try["x"], position_try["y"])
+                line_try = t.Line(position[-1]["x"], position[-1]["y"], position_try["x"], position_try["y"])
 
                 # Line-segments for the Intersection-Check
                 position_check1_1 = {"x": None, "y": None}
@@ -397,10 +278,10 @@ class Trajectory():
                 position_check2_1["y"] = position[-1]["y"] + (m.sin(direction_try + (90/180*m.pi)) * (self.__check_width_buffer))
                 position_check2_2["x"] = position_check2_1["x"] + (m.cos(direction_try) * (length_try + self.__check_length_buffer))
                 position_check2_2["y"] = position_check2_1["y"] + (m.sin(direction_try) * (length_try + self.__check_length_buffer))
-                line_check_1 = Line(position_check1_1["x"], position_check1_1["y"], position_check1_2["x"], position_check1_2["y"])
-                line_check_2 = Line(position_check2_1["x"], position_check2_1["y"], position_check2_2["x"], position_check2_2["y"])
-                line_check_3 = Line(position_check1_1["x"], position_check1_1["y"], position_check2_1["x"], position_check2_1["y"])
-                line_check_4 = Line(position_check1_1["x"], position_check1_1["y"], position_check2_2["x"], position_check2_2["y"])
+                line_check_1 = t.Line(position_check1_1["x"], position_check1_1["y"], position_check1_2["x"], position_check1_2["y"])
+                line_check_2 = t.Line(position_check2_1["x"], position_check2_1["y"], position_check2_2["x"], position_check2_2["y"])
+                line_check_3 = t.Line(position_check1_1["x"], position_check1_1["y"], position_check2_1["x"], position_check2_1["y"])
+                line_check_4 = t.Line(position_check1_1["x"], position_check1_1["y"], position_check2_2["x"], position_check2_2["y"])
 
                 # Intersection-Check and Saving if Line-Segments
                 if(self.__check_intersection(line_check_1) or
@@ -436,49 +317,6 @@ class Trajectory():
     def get_garbage(self):
         return(self.__not_trajectory)
 
-class Line():
-    def __init__(self, x1, y1, x2, y2):
-        self.__x1 = float(x1)
-        self.__y1 = float(y1)
-        self.__x2 = float(x2)
-        self.__y2 = float(y2)
-
-    def x1(self):
-        return(self.__x1)
-
-    def y1(self):
-        return(self.__y1)
-
-    def x2(self):
-        return(self.__x2)
-
-    def y2(self):
-        return(self.__y2)
-
-    def set_x1(self, x1):
-        self.__x1 = x1
-
-    def set_y1(self, y1):
-        self.__y1 = y1
-
-    def set_x2(self, x2):
-        self.__x2 = x2
-
-    def set_y2(self, y2):
-        self.__y2 = y2
-    
-    def delta_x(self):
-        return(self.__x2-self.__x1)
-    
-    def delta_y(self):
-        return(self.__y2-self.__y1)
-    
-    def direction(self):
-        return(m.atan2(self.delta_y(), self.delta_x()))
-    
-    def length(self):
-        return(m.sqrt((self.delta_x())**2+(self.delta_y())**2))
-
 # Beginning of the Programm
 # -----------------------------------------------------------------------------
 
@@ -488,22 +326,22 @@ if __name__ == '__main__':
                        {"x": 5932836, "y": 566560},
                        {"x": 5932823, "y": 566526}]
     for index, filename in enumerate(filenames):
-        lines = import_lines(filename)
+        lines = t.lines_import(filename)
         trajectory = Trajectory()
         trajectory.set_geometry(lines)
-        # plot_geometry(lines, "Floorplan")
+        # t.plot_lines(lines, "Floorplan")
         trajectory.set_start_coordinate(start_positions[index]["x"], start_positions[index]["y"])
         trajectory.set_start_direction(80/180*m.pi)
         trajectories = create_multiple_trajectories(trajectory, 10)
-        # plot_line_segments(trajectory.get(), "Trajectory")
+        # t.plot_lines(trajectory.get(), "Trajectory")
         for i, current_trajectory in enumerate(trajectories):
-            points = line_segments_to_points(current_trajectory)
-            write_trajectory(current_trajectory, f'trajectory_{filename[0:-4]}_{i+1:05d}.csv')
+            points = t.lines_to_points(current_trajectory)
+            t.lines_export(current_trajectory, f'trajectory_{filename[0:-4]}_{i+1:05d}.csv')
             # plot_results([points["x"]],
             #             "Trajektorie",
             #             "Y",
             #             "X",
             #             ["Trajektorie"],
             #             points["y"])
-            # plot_two_geometries(lines, current_trajectory, f'Trajectory with floorplan "{filename}"')
-            # plot_three_geometries(lines, current_trajectory, trajectory.get_garbage(), f'Trajectory with floorplan "{filename}"')
+            # plot_lines_rgb(lines_blue=lines, lines_green=current_trajectory, f'Trajectory with floorplan "{filename}"')
+            # plot_lines_rgb(lines_blue=lines, lines_green=current_trajectory, lines_red=trajectory.get_garbage(), f'Trajectory with floorplan "{filename}"')
