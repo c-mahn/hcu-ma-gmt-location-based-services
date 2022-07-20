@@ -14,8 +14,10 @@
 # Import of Libraries
 # -----------------------------------------------------------------------------
 
+import main as settings
 # import string as st
-# import random as r
+import random as r
+import time
 # import re
 # from turtle import position
 # from scipy import interpolate
@@ -40,39 +42,9 @@ verbose = True  # Shows more debugging information
 # Functions
 # -----------------------------------------------------------------------------
 
-
-def plot_results(datasets, title_label, x_label, y_label, data_label, timestamps=None):
-    """
-    This function plots graphs.
-
-    Args:
-        datasets ([[float]]): A list with datasets a lists with floating-point
-        
-                              numbers
-        title_label (str): This is the tile of the plot
-        x_label (str): This is the label of the x-axis
-        y_label (str): This is the label of the y-axis
-        data_label ([str]): This is a list with labels of the datasets
-        timestamps ([float], optional): By using a list of floating-point
-                                        numbers the data get's plotted on a
-                                        time-axis. If nothing is provided the
-                                        values will be plotted equidistant.
-    """
-    for i, dataset in enumerate(datasets):
-        if(timestamps==None):
-            timestamps = range(len(dataset))
-        plt.plot(timestamps, dataset)
-    plt.legend(data_label)
-    plt.grid()
-    plt.xlabel(x_label)
-    plt.ylabel(y_label)
-    plt.title(title_label)
-    plt.show()
-
-
-def generate_trajectory(trajectory):
+def __help_generate_trajectory(trajectory):
     trajectory.generate()
-    return(trajectory.get())
+    return(trajectory.get(), trajectory.get_garbage())
 
 
 def create_multiple_trajectories(trajectory, ammount):
@@ -88,10 +60,9 @@ def create_multiple_trajectories(trajectory, ammount):
 
     # Making multiple copies of the trajectory-object
     for i in range(ammount):
-        print(f'[INFO][1/2][{i+1}/{ammount}] Copying trajectory', end="\r")
-        trajectory_objects.append(copy.copy(trajectory))
-    if(verbose):
-        print("")
+        if(verbose):
+            print(f'[INFO][1/2][{i+1}/{ammount}] Copying trajectory', end="\r")
+        trajectory_objects.append(copy.deepcopy(trajectory))
 
     # Processing the generation and retrieval of trajectories in parallel
     if(verbose):
@@ -101,87 +72,174 @@ def create_multiple_trajectories(trajectory, ammount):
         elif(ammount >= 1000):
             print(f'[DANGER] This might be extremely long to process...')
     processing = mp.Pool()
-    trajectories = processing.map(generate_trajectory, trajectory_objects)
-    # if(verbose):
-    #     print("")
+    trajectories = processing.map(__help_generate_trajectory, trajectory_objects)
     return(trajectories)
+
+
+def __help_plot_lines_rgb(input):
+    t.plot_lines_rgb(lines_red=input["red"], lines_green=input["green"], lines_blue=input["blue"], title=input["title"], filename=input["filename"])
+    return(None)
+
+
+def plot_lines_rgb_multiple(filenames, lines_red=None, lines_green=None, lines_blue=None, titles=None):
+    if(verbose):
+        print(f'[INFO] Plotting {len(filenames)} graphs')
+    tasks = []
+    for i, filename in enumerate(filenames):
+        red = None
+        green = None
+        blue = None
+        title = "Line-segments"
+        if(lines_red != None):
+            red = lines_red[i]
+        if(lines_green != None):
+            green = lines_green[i]
+        if(lines_blue != None):
+            blue = lines_blue[i]
+        if(titles != None):
+            title = titles[i]
+        tasks.append({"red": red, "green": green, "blue": blue, "title":title, "filename": filename})
+    processing = mp.Pool()
+    processing.map(__help_plot_lines_rgb, tasks)
+    return(None)
 
 
 # Classes
 # -----------------------------------------------------------------------------
 
 class Trajectory():
-    def __init__(self):
-        self.__position_init = {"x": 0.0, "y": 0.0}
+    def __init__(self,
+                 position_init={"x": 0.0, "y": 0.0},
+                 direction_init=0,
+                 direction_step_noise=10/180*m.pi,
+                 direction_try_noise_add=5/180*m.pi,
+                 length_total=250,
+                 length_step=0.8,
+                 length_step_noise=0.15,
+                 geometry=[],
+                 trajectory=[],
+                 not_trajectory=[],
+                 tries=5,
+                 check_length_buffer=0.4,
+                 check_width_buffer=0.3):
+        self.position_init = position_init
         # This is the initial position, where the trajectories are generated 
         # from
 
-        self.__direction_init = 0
+        self.direction_init = direction_init
         # This is the initial direction the trajectory starts from
 
-        self.__direction_step_noise = 10/180*m.pi
+        self.direction_step_noise = direction_step_noise
         # This is the amount of bending, that occurs as a base angle-change.
 
-        self.__direction_try_noise_add = 5/180*m.pi
+        self.direction_try_noise_add = direction_try_noise_add
         # This is the amount of bending, that get's applied for areas with
         # higher generation-difficulty.
 
-        self.__length_total = 250
+        self.length_total = length_total
         # length of the trajectory in footsteps
 
-        self.__length_step = 0.8
+        self.length_step = length_step
         # length of the average footstep in meters
 
-        self.__length_step_noise = 0.15
+        self.length_step_noise = length_step_noise
         # standard-deviation of the average footstep
 
-        self.__geometry = []
+        self.geometry = geometry
         # This is a list of Line-Objects, that form a complex boundary for the
         # trajectory
 
-        self.__trajectory = []
+        self.trajectory = trajectory
         # This is a list, which will contain the generated trajectory
         # consisting of line segments.
 
-        self.__not_trajectory = []
+        self.not_trajectory = not_trajectory
         # This is a list with all Line-segments, that were discarded in the
         # trajectory-generation.
 
-        self.__tries = 5
+        self.tries = tries
         # This variable sets the number of tries a step will be generated,
         # before stepping back one step recursively.
 
-        self.__check_length_buffer = 0.4
+        self.check_length_buffer = check_length_buffer
         # This variable controls the behaviour for the trajectory to avoid
         # direct wall-contact. The step will be extended by this amount in
         # meters before checking intersection with walls.
 
-        self.__check_width_buffer = 0.3
+        self.check_width_buffer = check_width_buffer
         # This variable controls the behaviour for the trajectory to avoid
         # direct wall-contact. The step will be widened by this amount in
         # meters before checking intersection with walls.
 
+    def __copy__(self):
+        return(type(self)(self.position_init,
+                          self.direction_init,
+                          self.direction_step_noise,
+                          self.direction_try_noise_add,
+                          self.length_total,
+                          self.length_step,
+                          self.length_step_noise,
+                          self.geometry,
+                          self.trajectory,
+                          self.not_trajectory,
+                          self.tries,
+                          self.check_length_buffer,
+                          self.check_width_buffer))
+
+    def __deepcopy__(self, memo):  # I don't know what memo is for, but it's
+                                   # something with recursive copy or something
+                                   # similar
+        return(type(self)(
+               copy.deepcopy(self.position_init, memo), 
+               copy.deepcopy(self.direction_init, memo), 
+               copy.deepcopy(self.direction_step_noise, memo), 
+               copy.deepcopy(self.direction_try_noise_add, memo), 
+               copy.deepcopy(self.length_total, memo), 
+               copy.deepcopy(self.length_step, memo), 
+               copy.deepcopy(self.length_step_noise, memo), 
+               copy.deepcopy(self.geometry, memo), 
+               copy.deepcopy(self.trajectory, memo), 
+               copy.deepcopy(self.not_trajectory, memo), 
+               copy.deepcopy(self.tries, memo), 
+               copy.deepcopy(self.check_length_buffer, memo), 
+               copy.deepcopy(self.check_width_buffer, memo)))
+
+    def export(self):
+        return(self.position_init,
+               self.direction_init,
+               self.direction_step_noise,
+               self.direction_try_noise_add,
+               self.length_total,
+               self.length_step,
+               self.length_step_noise,
+               self.geometry,
+               self.trajectory,
+               self.not_trajectory,
+               self.tries,
+               self.check_length_buffer,
+               self.check_width_buffer)
+
     def set_start_coordinate(self, x, y):
-        self.__position_init["x"] = float(x)
-        self.__position_init["y"] = float(y)
+        self.position_init["x"] = float(x)
+        self.position_init["y"] = float(y)
 
     def set_start_direction(self, direction):
-        self.__direction_init = float(direction)
+        self.direction_init = float(direction)
 
     def set_direction_turn_noise(self, mdev):
-        self.__direction_step_noise = float(mdev)
+        self.direction_step_noise = float(mdev)
 
     def set_trajectory_length(self, footsteps):
-        self.__length_total = float(footsteps)
+        self.length_total = float(footsteps)
 
     def set_median_step_size(self, length):
-        self.__length_step = float(length)
+        self.length_step = float(length)
 
     def set_step_size_noise(self, mdev):
-        self.__length_step_noise = float(mdev)
+        self.length_step_noise = float(mdev)
 
     def set_geometry(self, line_segments):
-        self.__geometry = line_segments
+        self.geometry = line_segments
 
     def __check_intersection(self, line):
         """
@@ -193,7 +251,7 @@ class Trajectory():
         intersection = False
         point1 = {"x": line.x1(), "y": line.y1()}
         point2 = {"x": line.x2(), "y": line.y2()}
-        for i in self.__geometry:
+        for i in self.geometry:
             point3 = {"x": i.x1(), "y": i.y1()}
             point4 = {"x": i.x2(), "y": i.y2()}
             try:
@@ -218,16 +276,16 @@ class Trajectory():
         """
         This method generates the trajectory using a iterative aproach.
         """
-        direction = self.__direction_init
-        position = self.__position_init
-        self.__trajectory = []
-        for i in range(self.__length_total):
+        direction = self.direction_init
+        position = self.position_init
+        self.trajectory = []
+        for i in range(self.length_total):
             tries = 0
             direction_try = direction
             while(tries < 100):
                 # print(f'{tries}    ', end="\r")
-                direction_try += np.random.normal(0, self.__direction_step_noise)
-                length_try = self.__length_step + np.random.normal(0, self.__length_step_noise)
+                direction_try += np.random.normal(0, self.direction_step_noise)
+                length_try = self.length_step + np.random.normal(0, self.length_step_noise)
                 position_try = {"x": None, "y": None}
                 position_try["x"] = position["x"] + (m.cos(direction_try) * length_try)
                 position_try["y"] = position["y"] + (m.sin(direction_try) * length_try)
@@ -235,29 +293,27 @@ class Trajectory():
                 if(self.__check_intersection(line_try)):
                     tries += 1
                 else:
-                    self.__trajectory.append(line_try)
+                    self.trajectory.append(line_try)
                     direction = direction_try
                     position = position_try
                     break
-            if(verbose):
-                print(f'[INFO][{i+1}/{self.__length_total}] Generating trajectory', end="\r")
 
     def generate(self):
         """
         This function generates the trajectory recursively.
         """
-        direction = [self.__direction_init]
-        position = [self.__position_init]
-        self.__trajectory = []
+        direction = [self.direction_init]
+        position = [self.position_init]
+        self.trajectory = []
         tries = [0]
-        while(len(position) <= self.__length_total):
+        while(len(position) <= self.length_total):
             if(verbose):
-                # print(f'[INFO][{len(position)+1}/{self.__length_total}] Generating trajectory ', end="\r")
+                # print(f'[INFO][{len(position)+1}/{self.length_total}] Generating trajectory ', end="\r")
                 pass
-            while(tries[-1] < self.__tries):
+            while(tries[-1] < self.tries):
                 tries[-1] += 1
-                direction_try = np.random.normal(direction[-1], (self.__direction_step_noise + (tries[-1] * self.__direction_try_noise_add)))
-                length_try = np.random.normal(self.__length_step, self.__length_step_noise)
+                direction_try = np.random.normal(direction[-1], (self.direction_step_noise + (tries[-1] * self.direction_try_noise_add)))
+                length_try = np.random.normal(self.length_step, self.length_step_noise)
 
                 # Line-segment for the trajectory
                 position_try = {"x": None, "y": None}
@@ -270,14 +326,14 @@ class Trajectory():
                 position_check1_2 = {"x": None, "y": None}
                 position_check2_1 = {"x": None, "y": None}
                 position_check2_2 = {"x": None, "y": None}
-                position_check1_1["x"] = position[-1]["x"] + (m.cos(direction_try - (90/180*m.pi)) * (self.__check_width_buffer))
-                position_check1_1["y"] = position[-1]["y"] + (m.sin(direction_try - (90/180*m.pi)) * (self.__check_width_buffer))
-                position_check1_2["x"] = position_check1_1["x"] + (m.cos(direction_try) * (length_try + self.__check_length_buffer))
-                position_check1_2["y"] = position_check1_1["y"] + (m.sin(direction_try) * (length_try + self.__check_length_buffer))
-                position_check2_1["x"] = position[-1]["x"] + (m.cos(direction_try + (90/180*m.pi)) * (self.__check_width_buffer))
-                position_check2_1["y"] = position[-1]["y"] + (m.sin(direction_try + (90/180*m.pi)) * (self.__check_width_buffer))
-                position_check2_2["x"] = position_check2_1["x"] + (m.cos(direction_try) * (length_try + self.__check_length_buffer))
-                position_check2_2["y"] = position_check2_1["y"] + (m.sin(direction_try) * (length_try + self.__check_length_buffer))
+                position_check1_1["x"] = position[-1]["x"] + (m.cos(direction_try - (90/180*m.pi)) * (self.check_width_buffer))
+                position_check1_1["y"] = position[-1]["y"] + (m.sin(direction_try - (90/180*m.pi)) * (self.check_width_buffer))
+                position_check1_2["x"] = position_check1_1["x"] + (m.cos(direction_try) * (length_try + self.check_length_buffer))
+                position_check1_2["y"] = position_check1_1["y"] + (m.sin(direction_try) * (length_try + self.check_length_buffer))
+                position_check2_1["x"] = position[-1]["x"] + (m.cos(direction_try + (90/180*m.pi)) * (self.check_width_buffer))
+                position_check2_1["y"] = position[-1]["y"] + (m.sin(direction_try + (90/180*m.pi)) * (self.check_width_buffer))
+                position_check2_2["x"] = position_check2_1["x"] + (m.cos(direction_try) * (length_try + self.check_length_buffer))
+                position_check2_2["y"] = position_check2_1["y"] + (m.sin(direction_try) * (length_try + self.check_length_buffer))
                 line_check_1 = t.Line(position_check1_1["x"], position_check1_1["y"], position_check1_2["x"], position_check1_2["y"])
                 line_check_2 = t.Line(position_check2_1["x"], position_check2_1["y"], position_check2_2["x"], position_check2_2["y"])
                 line_check_3 = t.Line(position_check1_1["x"], position_check1_1["y"], position_check2_1["x"], position_check2_1["y"])
@@ -293,55 +349,80 @@ class Trajectory():
                     direction.append(direction_try)
                     position.append(position_try)
                     tries.append(0)
-                    self.__trajectory.append(line_try)
-                    if(len(self.__trajectory) > self.__length_total):
+                    self.trajectory.append(line_try)
+                    if(len(self.trajectory) > self.length_total):
                         break
             direction.pop(-1)
             position.pop(-1)
             tries.pop(-1)
-            self.__not_trajectory.append(self.__trajectory.pop(-1))
-            """
-            if(len(self.__not_trajectory)%1000 == 0):
-                for i in range(50):
-                    direction.pop(-1)
-                    position.pop(-1)
-                    tries.pop(-1)
-                    self.__not_trajectory.append(self.__trajectory.pop(-1))
-                    """
-        # if(verbose):
-        #     print(f'X', end="")
+            self.not_trajectory.append(self.trajectory.pop(-1))
 
     def get(self):
-        return(self.__trajectory)
+        # This method returns the trajectory
+        return(self.trajectory)
 
     def get_garbage(self):
-        return(self.__not_trajectory)
+        # This method returns the line-segments, that failed to generate
+        return(self.not_trajectory)
 
 # Beginning of the Programm
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    filenames = ["floor_EG_lines.csv", "floor_1OG_lines.csv", "floor_4OG_lines.csv"]
-    start_positions = [{"x": 5932827, "y": 566527},
-                       {"x": 5932836, "y": 566560},
-                       {"x": 5932823, "y": 566526}]
-    for index, filename in enumerate(filenames):
-        lines = t.lines_import(filename)
+
+    # Setting starting values
+    start_positions = settings.project_start_positions
+    start_directions = settings.project_start_directions
+    
+    # Collecting all plot-data for later parallel processing
+    plots = {"filenames": [], "lines_red": [], "lines_green": [], "lines_blue": [], "titles": []}
+
+    # Iterating over all projects, do ...
+    for index, projectname in enumerate(settings.project_filenames):
+
+        # Import floorplan
+        floorplan = t.lines_import(f'{projectname}_lines.csv')
+
+        # Set up the trajectory
         trajectory = Trajectory()
-        trajectory.set_geometry(lines)
-        # t.plot_lines(lines, "Floorplan")
+        trajectory.set_geometry(floorplan)
         trajectory.set_start_coordinate(start_positions[index]["x"], start_positions[index]["y"])
-        trajectory.set_start_direction(80/180*m.pi)
-        trajectories = create_multiple_trajectories(trajectory, 10)
-        # t.plot_lines(trajectory.get(), "Trajectory")
-        for i, current_trajectory in enumerate(trajectories):
-            points = t.lines_to_points(current_trajectory)
-            t.lines_export(current_trajectory, f'trajectory_{filename[0:-4]}_{i+1:05d}.csv')
-            # plot_results([points["x"]],
-            #             "Trajektorie",
-            #             "Y",
-            #             "X",
-            #             ["Trajektorie"],
-            #             points["y"])
-            # plot_lines_rgb(lines_blue=lines, lines_green=current_trajectory, f'Trajectory with floorplan "{filename}"')
-            # plot_lines_rgb(lines_blue=lines, lines_green=current_trajectory, lines_red=trajectory.get_garbage(), f'Trajectory with floorplan "{filename}"')
+        trajectory.set_start_direction(start_directions[index])
+
+        # Creating the trajectories
+        data = create_multiple_trajectories(trajectory, settings.trajectories_per_project)
+
+        # Saving the data
+        trajectories = []
+        not_trajectories = []
+        for i in data:
+            trajectories.append(i[0])
+            not_trajectories.append(i[1])
+        del i
+        
+        # Iterating over the individual trajectories, do ...
+        for trajectory_index, current_trajectory in enumerate(trajectories):
+            
+            # Export the trajectory as .csv-file
+            t.lines_export(current_trajectory, f'trajectory_{projectname}_{trajectory_index+1:05d}_ground-truth.csv')
+
+            # Create Plot 1
+            plots["filenames"].append(f'trajectory_{projectname}_{trajectory_index+1:05d}')
+            plots["titles"].append(f'Trajectory with floorplan "{projectname}"')
+            plots["lines_red"].append(None)
+            plots["lines_green"].append(current_trajectory)
+            plots["lines_blue"].append(floorplan)
+
+            # Create Plot 2
+            plots["filenames"].append(f'trajectory_{projectname}_{trajectory_index+1:05d}_with_disregarded_lines')
+            plots["titles"].append(f'Trajectory with floorplan "{projectname}" and discarded Line-segments')
+            plots["lines_red"].append(not_trajectories[trajectory_index])
+            plots["lines_green"].append(current_trajectory)
+            plots["lines_blue"].append(floorplan)
+
+    # Plotting everything in parallel
+    plot_lines_rgb_multiple(filenames=plots["filenames"],
+                            lines_red=plots["lines_red"],
+                            lines_green=plots["lines_green"],
+                            lines_blue=plots["lines_blue"],
+                            titles=plots["titles"])

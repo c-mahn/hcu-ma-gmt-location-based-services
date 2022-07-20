@@ -14,6 +14,7 @@
 # Import of Libraries
 # -----------------------------------------------------------------------------
 
+import main as settings
 # import string as st
 # import random as r
 # import re
@@ -67,21 +68,19 @@ def write_text(filename, text):
 
 if __name__ == '__main__':
     # Dataset-Information
-    datasets = ["trajectory_floor_EG_lines",
-                "trajectory_floor_1OG_lines",
-                "trajectory_floor_4OG_lines"]
-    dataset_length = 10  # Number of datasets per project-name
-    trainingset_length = 10  # Number of training-datasets per trajectory
+    projectnames = settings.project_filenames
+    dataset_length = settings.trajectories_per_project  # Number of datasets per project-name
+    trainingset_length = settings.datasets_per_trajectory  # Number of training-datasets per trajectory
     
     # Import of individual trajectories
-    for dataset_index, dataset in enumerate(datasets):
+    for dataset_index, projectname in enumerate(projectnames):
         for trajectory_index in range(dataset_length):
-            trajectory_ground_truth = t.lines_import(f'{dataset}_{trajectory_index+1:05d}.csv')  # Ground truth data for training
+            trajectory_ground_truth = t.lines_import(f'trajectory_{projectname}_{trajectory_index+1:05d}_ground-truth.csv')  # Ground truth data for training
 
             # Importing Training-datasets
             trajectories_measured = []
             for trainingset_index in range(trainingset_length):
-                trajectories_measured.append(t.lines_import(f'{dataset}_{trajectory_index+1:05d}_noised_{trainingset_index+1:05d}.csv'))
+                trajectories_measured.append(t.lines_import(f'trajectory_{projectname}_{trajectory_index+1:05d}_training_{trainingset_index+1:05d}.csv'))
 
             # Preparing training-data
             data_groundtruth = []
@@ -107,7 +106,7 @@ if __name__ == '__main__':
             # Training ML
             mlpr = MLPRegressor(hidden_layer_sizes=(5, 5), solver='adam', max_iter=50000, verbose=True, random_state=1, learning_rate="adaptive", tol=1e-10)
             mlpr.fit(data_measured, data_groundtruth)
-            write_text(f'{dataset}_{trajectory_index+1:05d}_ml-model.txt', mlpr.coefs_)
+            write_text(f'result_{projectname}_{trajectory_index+1:05d}_ml-model.txt', mlpr.coefs_)
 
             # Preparing validation-data
             validation_data = []
@@ -130,4 +129,4 @@ if __name__ == '__main__':
             predicted_trajectory = []
             for i, e in enumerate(ml_prediction):
                 predicted_trajectory.append(t.Line(e[0], e[1], e[2], e[3]))
-            t.lines_export(predicted_trajectory, f'{dataset}_{trajectory_index+1:05d}_ml-prediction.txt')
+            t.lines_export(predicted_trajectory, f'result_{projectname}_{trajectory_index+1:05d}_ml-prediction.csv')

@@ -14,6 +14,7 @@
 # Import of Libraries
 # -----------------------------------------------------------------------------
 
+import main as settings
 # import string as st
 # import random as r
 # import re
@@ -69,8 +70,7 @@ def convert_walls(geometry):
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    filenames = ["floor_EG", "floor_1OG", "floor_4OG"]
-    for i, filename in enumerate(filenames):
+    for i, filename in enumerate(settings.project_filenames):
         geometry = []
         data = json.loads(import_data(f'{filename}.geojson'))
         for feature in data["features"]:

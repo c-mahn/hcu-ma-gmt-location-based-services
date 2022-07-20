@@ -83,7 +83,10 @@ def lines_export(lines, filename):
                 f.write(f'{index}; {line.x1()}; {line.y1()}; {line.x2()}; {line.y2()}; {line.delta_x()}; {line.delta_y()}; {line.direction()}; {lines[index-1].direction()-line.direction()}; {line.length()}\n')
 
 
-def plot_lines(lines, title="Line-segments"):
+def plot_lines(lines, title="Line-segments", filename="plot"):
+    if(verbose):
+        pass
+        # print(f'[INFO] Plotting lines')
     for i in lines:
         plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()])
     # plt.legend(["lines"])
@@ -91,27 +94,65 @@ def plot_lines(lines, title="Line-segments"):
     plt.xlabel("Y")
     plt.ylabel("X")
     plt.title(title)
-    plt.show()
+    plt.savefig(format="png", fname=os.path.join("plots", f'{filename}.png'))
 
 
-def plot_lines_rgb(lines_red=None, lines_green=None, lines_blue=None, title="Line-segments"):
+def plot_lines_rgb(lines_red=None, lines_green=None, lines_blue=None, title="Line-segments", filename="plot"):
+    if(verbose):
+        pass
+        # print(f'[INFO] Plotting lines (RGB)')
     if(lines_red != None):
         for i in lines_red:
-            plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()], color='blue')
+            plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()], color='red')
     if(lines_green != None):
         for i in lines_green:
             plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()], color='green')
     if(lines_blue != None):
         for i in lines_blue:
-            plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()], color='red')
+            plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()], color='blue')
     plt.grid()
     plt.xlabel("Y")
     plt.ylabel("X")
     plt.title(title)
+    plt.savefig(format="png", fname=os.path.join("plots", f'{filename}.png'))
+
+
+def plot_graph(datasets, title_label, x_label, y_label, data_label, timestamps=None):
+    """
+    This function plots graphs.
+
+    Args:
+        datasets ([[float]]): A list with datasets a lists with floating-point
+        
+                              numbers
+        title_label (str): This is the tile of the plot
+        x_label (str): This is the label of the x-axis
+        y_label (str): This is the label of the y-axis
+        data_label ([str]): This is a list with labels of the datasets
+        timestamps ([float], optional): By using a list of floating-point
+                                        numbers the data get's plotted on a
+                                        time-axis. If nothing is provided the
+                                        values will be plotted equidistant.
+    """
+    for i, dataset in enumerate(datasets):
+        if(timestamps==None):
+            timestamps = range(len(dataset))
+        plt.plot(timestamps, dataset)
+    plt.legend(data_label)
+    plt.grid()
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(title_label)
     plt.show()
 
 
 def lines_to_points(lines):
+    """
+    This function converts a 2D trajectory of Line-objects into points.
+
+    Args:
+        lines ([Line]): Trajectory consisting of Line-objects inside a list
+    """
     points = {"x": [], "y": []}
     points["x"].append(lines[0].x1())
     points["y"].append(lines[0].y1())
@@ -123,7 +164,7 @@ def lines_to_points(lines):
 
 def points_to_lines(points):
     """
-    This function converts a 2D trajectory of points into line-segments
+    This function converts a 2D trajectory of points into line-segments.
 
     Args:
         points ([[float, float]]): Trajectory consisting of points

@@ -14,12 +14,14 @@
 # Import of Libraries
 # -----------------------------------------------------------------------------
 
-# import math as m
+import math as m
 # import string as st
 # import random as r
 # import re
 import os
 import platform
+
+from sklearn import datasets
 
 
 # -----------------------------------------------------------------------------
@@ -28,10 +30,22 @@ import platform
 verbose = True  # Shows more debugging information
 
 
+# -----------------------------------------------------------------------------
+# Project-Settings
+
+project_filenames = ["floor_EG", "floor_1OG", "floor_4OG"]
+project_start_positions = [{"x": 5932827, "y": 566527},
+                           {"x": 5932836, "y": 566560},
+                           {"x": 5932823, "y": 566526}]
+project_start_directions = [80/180*m.pi, 80/180*m.pi, 80/180*m.pi]
+trajectories_per_project = 1
+datasets_per_trajectory = 5
+
+
 # Functions
 # -----------------------------------------------------------------------------
 
-def run_script(script_name):
+def __run_script(script_name):
     """
     This function executes python scripts via the command line.
 
@@ -57,7 +71,7 @@ def run_script(script_name):
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    run_script("prepare_data.py")
-    run_script("generate_trajectory.py")
-    run_script("noising_trajectory.py")
-    run_script("linear_regression.py")
+    __run_script("prepare_data.py")
+    __run_script("generate_trajectory.py")
+    __run_script("noising_trajectory.py")
+    __run_script("linear_regression.py")

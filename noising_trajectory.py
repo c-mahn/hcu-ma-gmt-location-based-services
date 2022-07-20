@@ -14,6 +14,7 @@
 # Import of Libraries
 # -----------------------------------------------------------------------------
 
+import main as settings
 # import string as st
 # import random as r
 # import re
@@ -120,8 +121,8 @@ def write_noise_information(smean, sstd, rmean, rstd, trajectory_describtion):
         filename (str): the filename where the points are written to
     """
     if(verbose):
-        print(f'[INFO] Writing noise-information to "{trajectory_describtion}_noise-information.log"')
-    with open(os.path.join("data", f'{trajectory_describtion}_noise-information.log'), "w") as f:
+        print(f'[INFO] Writing noise-information to "{trajectory_describtion}"')
+    with open(os.path.join("data", f'{trajectory_describtion}'), "w") as f:
         f.write(f'distance; mean; {smean}\n')
         f.write(f'distance; sdev; {sstd}\n')
         f.write(f'rotation; mean; {rmean}\n')
@@ -138,17 +139,14 @@ def write_noise_information(smean, sstd, rmean, rstd, trajectory_describtion):
 
 if __name__ == '__main__':
     # Dataset-Information
-    datasets = ["trajectory_floor_EG_lines",
-                "trajectory_floor_1OG_lines",
-                "trajectory_floor_4OG_lines"]
-    dataset_lengths = [10, 10, 10]
-    training_data_length = 10  # Number of noised trajectories to generate for training
+    projectnames = settings.project_filenames
+    dataset_length = settings.trajectories_per_project
+    training_data_length = settings.datasets_per_trajectory  # Number of noised trajectories to generate for training
     
     # Import of individual trajectories
-    for dataset_index, dataset in enumerate(datasets):
-        dataset_length = dataset_lengths[dataset_index]
+    for dataset_index, projectname in enumerate(projectnames):
         for trajectory_index in range(dataset_length):
-            trajectory = t.lines_import(f'{dataset}_{trajectory_index+1:05d}.csv')
+            trajectory = t.lines_import(f'trajectory_{projectname}_{trajectory_index+1:05d}_ground-truth.csv')
             
             # Generating sensor-noise parameters
             rotation_drift = np.random.normal(0, 0.1/200*m.pi)  # One-sided drift at each step
@@ -157,10 +155,10 @@ if __name__ == '__main__':
             step_length_noise = abs(np.random.normal(0, 0.025))  # Random scale of each step
             if(verbose):
                 print(f'[INFO][CONFIG] Rotation: {rotation_drift:.5f} ± {rotation_noise:.5f} rad, Scale: {step_length_scale:.5f} ± {step_length_noise:.5f} x')
-            write_noise_information(step_length_scale, step_length_noise, rotation_drift, rotation_noise, f'{dataset}_{trajectory_index+1:05d}')
+            write_noise_information(step_length_scale, step_length_noise, rotation_drift, rotation_noise, f'trajectory_{projectname}_{trajectory_index+1:05d}_applied-noise.log')
 
             for noise_index in range(training_data_length):
                 noised_trajectory = scale_trajectory(trajectory.copy(), step_length_scale, step_length_noise)
                 noised_trajectory = rotate_trajectory(noised_trajectory, rotation_drift, rotation_noise)
-                t.lines_export(noised_trajectory, f'{dataset}_{trajectory_index+1:05d}_noised_{noise_index+1:05d}.csv')
+                t.lines_export(noised_trajectory, f'trajectory_{projectname}_{trajectory_index+1:05d}_training_{noise_index+1:05d}.csv')
                 del noised_trajectory
