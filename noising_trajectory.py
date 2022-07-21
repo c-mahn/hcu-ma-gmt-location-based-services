@@ -112,17 +112,21 @@ def rotate_trajectory(trajectory, mean, stdev):
     return(trajectory_new)
 
 
-def write_noise_information(smean, sstd, rmean, rstd, trajectory_describtion):
+def write_noise_information(smean, sstd, rmean, rstd, filename):
     """
-    This function takes a list of points and writes them to a text-file.
+    This function writes the virtual noise-information that has been generated
+    to a file.
 
     Args:
-        points ({"x": [float], "y": [float]}): A list of points formated in a dictionary
-        filename (str): the filename where the points are written to
+        smean (float): the value of the mean scaling-factor
+        sstd (float): the value of the standard-deviation of the scaling-factor
+        rmean (float): the value of the mean rotation
+        rstd (float): the value of the standard-deviation of the rotation
+        filename (str): the filename where the text is written to. (Including file-extension)
     """
     if(verbose):
-        print(f'[INFO] Writing noise-information to "{trajectory_describtion}"')
-    with open(os.path.join("data", f'{trajectory_describtion}'), "w") as f:
+        print(f'[INFO] Writing noise-information to "{filename}"')
+    with open(os.path.join("data", f'{filename}'), "w") as f:
         f.write(f'distance; mean; {smean}\n')
         f.write(f'distance; sdev; {sstd}\n')
         f.write(f'rotation; mean; {rmean}\n')
@@ -157,6 +161,7 @@ if __name__ == '__main__':
                 print(f'[INFO][CONFIG] Rotation: {rotation_drift:.5f} ± {rotation_noise:.5f} rad, Scale: {step_length_scale:.5f} ± {step_length_noise:.5f} x')
             write_noise_information(step_length_scale, step_length_noise, rotation_drift, rotation_noise, f'trajectory_{projectname}_{trajectory_index+1:05d}_applied-noise.log')
 
+            # Generating and exporting of the noised-trajectories.
             for noise_index in range(training_data_length):
                 noised_trajectory = scale_trajectory(trajectory.copy(), step_length_scale, step_length_noise)
                 noised_trajectory = rotate_trajectory(noised_trajectory, rotation_drift, rotation_noise)

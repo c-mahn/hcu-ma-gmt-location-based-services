@@ -66,10 +66,10 @@ def create_multiple_trajectories(trajectory, ammount):
 
     # Processing the generation and retrieval of trajectories in parallel
     if(verbose):
-        print(f'[INFO][2/2] Generating {ammount} trajectories')
-        if(ammount >= 50):
+        print(f'[INFO][PARALLEL][2/2] Generating {ammount} trajectories')
+        if(ammount >= 10):
             print(f'[WARN] This might take some time to process...')
-        elif(ammount >= 1000):
+        elif(ammount >= 50):
             print(f'[DANGER] This might be extremely long to process...')
     processing = mp.Pool()
     trajectories = processing.map(__help_generate_trajectory, trajectory_objects)
@@ -83,7 +83,7 @@ def __help_plot_lines_rgb(input):
 
 def plot_lines_rgb_multiple(filenames, lines_red=None, lines_green=None, lines_blue=None, titles=None):
     if(verbose):
-        print(f'[INFO] Plotting {len(filenames)} graphs')
+        print(f'[INFO][PARALLEL] Plotting {len(filenames)} graphs')
     tasks = []
     for i, filename in enumerate(filenames):
         red = None

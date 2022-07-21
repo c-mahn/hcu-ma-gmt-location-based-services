@@ -33,13 +33,38 @@ verbose = True  # Shows more debugging information
 # -----------------------------------------------------------------------------
 # Project-Settings
 
+# These settings affect how the executed scripts below will compute the data.
+# Changing these values may increase execution-time significantly or allowes to
+# change the computed input or output.
+
 project_filenames = ["floor_EG", "floor_1OG", "floor_4OG"]
+# These are the project-names for each "room"/floorplan where trajectories are
+# generated inside.
+
 project_start_positions = [{"x": 5932827, "y": 566527},
                            {"x": 5932836, "y": 566560},
                            {"x": 5932823, "y": 566526}]
+# These are the starting-positions for the trajectories inside the
+# project-environments.
+
 project_start_directions = [80/180*m.pi, 80/180*m.pi, 80/180*m.pi]
+# These are the starting-directions for the startpoint for the trjectories,
+# that are going to be generated.
+
 trajectories_per_project = 1
+# The ammount of trajectories per project controls the ammount of trajectories,
+# that are going to be generated per project. Having 3 projects with 4
+# trajectories per project will result in 12 trajectories with each floorplan
+# having 4.
+
 datasets_per_trajectory = 5
+# This variable controlls how many noised trajectories are going to be
+# generated for each trajectory. When having 12 trajectories from the previous
+# step and setting this variable to 10 would result in a total of 120
+# trajectories on top of the existing 12 trajectories, but having bias and
+# noise with the direction and length of the steps. The last trajectory, that
+# is going to be generated will not be used as training, but rather as
+# validation afterwards.
 
 
 # Functions
