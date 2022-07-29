@@ -81,5 +81,5 @@ if __name__ == '__main__':
                         geometry.append(wall)
         print(f'[INFO] Fetched {len(geometry)} line-segments')
         with open(os.path.join("data", f'{filename}_lines.csv'), "w") as file:
-            for j in geometry:
-                file.write(f'{j[1]}; {j[0]}; {j[3]}; {j[2]}\n')
+            for j, e in enumerate(geometry):
+                file.write(f'{j}; {e[1]}; {e[0]}; {e[3]}; {e[2]}\n')

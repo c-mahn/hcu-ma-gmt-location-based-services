@@ -59,7 +59,7 @@ def lines_import(filename):
         data = np.loadtxt(file, delimiter=";")
     lines = []
     for entry in data:
-        lines.append(Line(entry[0], entry[1], entry[2], entry[3]))
+        lines.append(Line(entry[1], entry[2], entry[3], entry[4]))
     if(verbose):
         print(f'[INFO] Imported file "{filename}" successfully')
     return(lines)
