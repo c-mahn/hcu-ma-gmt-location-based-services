@@ -117,6 +117,26 @@ def plot_lines_rgb(lines_red=None, lines_green=None, lines_blue=None, title="Lin
     plt.savefig(format="png", fname=os.path.join("plots", f'{filename}.png'))
 
 
+def plot_lines_rgb_show(lines_red=None, lines_green=None, lines_blue=None, title="Line-segments", filename="plot"):
+    if(verbose):
+        pass
+        # print(f'[INFO] Plotting lines (RGB)')
+    if(lines_red != None):
+        for i in lines_red:
+            plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()], color='red')
+    if(lines_green != None):
+        for i in lines_green:
+            plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()], color='green')
+    if(lines_blue != None):
+        for i in lines_blue:
+            plt.plot([i.y1(), i.y2()], [i.x1(), i.x2()], color='blue')
+    plt.grid()
+    plt.xlabel("Y")
+    plt.ylabel("X")
+    plt.title(title)
+    plt.show()
+
+
 def plot_graph(datasets, title_label, x_label, y_label, data_label, timestamps=None):
     """
     This function plots graphs.
